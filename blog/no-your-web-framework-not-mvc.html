@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>No, your web framework is not MVC</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header>No, your web framework is not MVC</header>
+    <nav>
+        <ul>
+
+  <li><a href="/blog/index.html">Blog</a></li>
+
+  <li><a href="/index.html">Welcome</a></li>
+
+</ul>
+
+    </nav>
+    <main><p>Whilst it is theoretically possible, I've yet to see a single server-side web framework that is MVC.</p>
+
+<p>"Oh, pshaw!", I hear you say, "But {framework of choice} says it is!  So it must be!"</p>
+
+<p>Yeah, and MySQL says it's a good DBMS...</p>
+
+<h2>What is MVC?</h2>
+
+<p>MVC - Model / View / Controller - is a design pattern for GUI applications to affect "separation of concerns".  This allows each part of the application to be loosely coupled, improving isolation, and enforcing adherence to interfaces.</p>
+
+<p>The Model provides interfaces to the state of the application and whatever data it accesses.</p>
+
+<p>The View subscribes to changes in the Model, and presents the information in a meaningful way to the "user".</p>
+
+<p>When the user interacts with the View, it sends actions to the Controller, which performs the work, and (in most cases) updates the application state by changing the Model.</p>
+
+<p>And around it goes.  Model changes state, View updates, etc.  Changes and updates always move in the same direction, and each component is only directly influenced by the previous in the circle.</p>
+
+<h2>Yeah, so why isn't {my framework} MVC?</h2>
+
+<p>OK, so most server side frameworks are generally:</p>
+
+<ul>
+<li>Use clicks link / presses button / etc.</li>
+<li>HTTP request is routed via URL patterns to a handler</li>
+<li>handler consults the DB for state</li>
+<li>handler generates a response using Templates</li>
+<li>handler returns response to User.</li>
+</ul>
+
+<p>Can you see the difference here?</p>
+
+<p>The handler is involved in almost every step.  Instead of a loop, we have:</p>
+
+<p>User actions are sent to the Handler, which we might equate to the Controller.</p>
+
+<p>And then the Controller affects changes to the DB, which is our Model.</p>
+
+<p>All fine so far.</p>
+
+<p>Except, our "view", which is the web browser, is not updated from our model.</p>
+
+<p>The Handler renders a Template using the updated Model state, and passes that to the browser.</p>
+
+<p>It's a subtle but important difference, and this pattern is known as "Model / View / Adapter", or also "Model / View / Mediating Controller", as the "controller" mediates between the View and the Model.</p>
+
+<p>You can read more about it <a href="https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93adapter">here</a></p>
+
+<h2>Aren't you just quibbling?</h2>
+
+<p>Well, no, not really (OK, a little bit :).</p>
+
+<p>Firstly, it's important to understand the differences to see why MVC works great on modern JS frameworks.</p>
+
+<p>But also, like the folly and abuse of the "nosql" term (where people mean non-relational), it's causing people to focus on the wrong features of the solution.  The goals of each part of a MVC and MVA system are different.</p>
+</main>
+    <footer> Copyright &copy; 2019 Curtis Maloney </footer>
+  </body>
+</html>
