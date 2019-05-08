@@ -1,0 +1,52 @@
+title: Updating two models in a single post
+content_type: MarkdownPage
+date: 2015-06-10
+tags:
+  - django
+  - forms
+  - python
+---
+This comes up a lot in #django ... and the solution is [as many are with Django] much simpler than people assume.
+
+Frequently I see people reach for formsets, in the mistaken conclusion that formsets are for operating on related models.  The sad part is that formsets rely on the same functionality that the proper solution relies on, but the seeker does not see it.
+
+Somewhere people get the idea that for a single &lt;form&gt; submission, they can only use a single Form class... but the formset should show that that's not true; it uses multiple forms from the one submission.
+
+## The answer
+
+So, as a simple example, here's a view that updates a User and their Profile in one view:
+
+    def user_edit(request):
+
+        if request.method == 'POST':
+            user_form = UserForm(request.POST, instance=request.user)
+            profile_form = ProfileForm(request.POST, instancel=request.user.profile)
+
+            if all([user_form.is_valid(), profile_form.is_valid()]):
+                user = user_form.save()
+                profile = profile_form.save()
+                return redirect(user)
+
+        else:
+            user_form = UserForm(instance=request.user)
+            profile_form = ProfileForm(instance=request.user.profile)
+
+        return render(request, 'accounts/user_form.html', {
+            'user_form': user_form,
+            'profile_form': profile_form,
+        })
+
+
+The two most significant things to notice here:
+
+1. the use of all() instead of ```user_form.is_valid() and profile_form.is_valid()```
+
+    This is because Python will "shortcut" the if clause if the first form is not valid, and so not run validation on the second form.
+
+     May not sound like much, but imagine how tedious it will be for your user when, after they finally get all the fields for the first form right, a whole new slew of errors who up?
+
+2. Two forms in the context.
+
+    Just render them all inside the one &lt;form&gt; tag, and you're right.
+
+    If any of the field names clash, pass a prefix= when constructing one of the forms, to prefix its field names so they're unique.

@@ -1,0 +1,62 @@
+title: Parsing search strings
+content_type: MarkdownPage
+date: 2015-05-03
+tags:
+  - django
+  - postgres
+  - python
+---
+We've all had to write a search form at some point.  Beyond simple cases, you reach for the big guns, like haystack, et al.
+
+But what about when it's just something simple?  What if you want to, for instance, let people search your blog posts?
+
+In django, that can be done simply with:
+
+    Blog.objects.filter(Q(title__icontains=word) | Q(body__icontains=word))
+
+Which is fine, until someone wants to look for a post on, for instance "django" and "cookies", as opposed to the phrase "django cookies".
+
+So, we need to split up the search terms, and iteratively filter for them:
+
+    qset = Blog.posts.all()
+    for term in terms.split(' '):
+        qset = qset.filter(Q(title__icontains=term) | Q(body__icontains=term))
+
+Which is all great, until you want to search for "apt-get install" and "postgres" as separate terms.  Reflexively you're probably thinking you'd do just that - put quotes around the terms to force groupings.  But how do you parse that?
+
+## Stdlib to the rescue!
+
+Of course, someone's had to do this before, and there's a lib for that.  But it's not made for searching.  It's the [shlex](https://docs.python.org/2/library/shlex.html) library.
+
+    >>> import shlex
+    >>> shlex.split('"apt-get install" django')
+    ['apt-get install', 'django']
+
+And it's that simple?  Well, not quite.  If someone leaves unbalanced quotes [or is trying to search for a measurement in inches] shlex will not be happy:
+
+    >>> shlex.split('macbook 13"')
+    Traceback (most recent call last):
+    ...
+    ValueError: No closing quotation
+
+To solve this we need to go just a little bit deeper.  The shlex.split function is really a wrapper for the shlex.shlex class, in a default and [generally] useful configuration.
+
+We need to configure a shlex to our needs.
+
+    from shlex import shlex
+
+    def parse_search_terms(terms):
+        lexer = shlex(terms)
+        lexer.commenters = ''
+        lexer.quotes = '"\''
+
+        while True:
+            term = lexer.get_token()
+            if not term:
+                 break
+            yield term
+
+Now we have a generator what will yield search terms, and can now easily filter our queryset!
+
+    >>> list(parse_search_terms('13" macbook'))
+    ['13"', 'macbook']
