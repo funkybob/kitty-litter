@@ -1,0 +1,8 @@
+content_type: TagCloud
+exclude_tags:
+  - in-menu
+filter_by:
+  startswith:
+    - attr: ['name']
+    - 'blog/'
+---

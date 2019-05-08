@@ -1,0 +1,5 @@
+<ul class="tag-cloud">
+{% for tag in tag_counts.most_common() %}
+    <li>{{ tag[0] }} <span>({{ tag[1] }})</span></li>
+{% endfor %}
+</ul>

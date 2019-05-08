@@ -1,0 +1,17 @@
+{% extends "default.html" %}
+
+{% block content %}
+
+{% include "cloud.html" tag_counts=site.content["cloud.yml"].tag_counts %}
+
+{{ this.content }}
+
+{% for page in site.content['menu/blog.yml'].pages %}
+  <article>
+    <header>
+      <a href="/{{ page.get_output_name() }}">{{page.title}}</a>
+    </header>
+  </article>
+{% endfor %}
+
+{% endblock %}

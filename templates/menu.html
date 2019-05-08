@@ -1,0 +1,5 @@
+<ul>
+{% for page in this.pages %}
+  <li><a href="/{{ page.get_output_name() }}">{{ page.title }}</a></li>
+{% endfor %}
+</ul>

@@ -1,0 +1,164 @@
+title: Plugins and auto-discovery in Python
+date: 2019-03-20
+# template: blog/post.html
+content_type: MarkdownPage
+tags:
+ - python
+---
+Whilst working on my toy static site generator
+[gilbert](https://github.com/funkybob/gilbert), I decided I wanted it to use a
+plugin pattern, so you could add new content types just by installing their
+packages.
+
+This would require some way for my code to automatically find all the related
+packages, import them, and register their content type sub-classes.
+
+But how?
+
+## Enter "implicit namespace packages"
+
+Added in Python 3.3,
+[PEP 420](https://www.python.org/dev/peps/pep-0420/) gives us "implicit
+namespace packages", which let many packages contribute to the same package
+namespace, simply by:
+
+ - using the same name, and
+ - omitting the `__init__.py`
+
+Not only that, but Python, as part of the import mechanism, will build a list
+of paths which contribute to the namespace. This gives us a clean way to work
+out what's been installed.
+
+## Step one: Finding all the packages
+
+For this, we're going to use the namespace `gilbert.plugins`.
+
+Next, we iterate over the `__path__` list, and import all the packages and
+modules we can find.
+
+    from importlib import import_module
+    from pathlib import Path
+
+
+    def find_plugins():
+        from gilbert import plugins
+
+        for path in plugins.__path__:
+            root = Path(path)  # Get a Path object for the source
+            print(f"Searching {root} for plugins...")
+
+            for child in root.iterdir():
+                # Only try to import things that look like packages or modules.
+                if not (
+                    child.is_dir() or
+                    (child.is_file() and child.suffix == '.py')
+                ):
+                    continue
+
+                # Find its path relative to the package
+                rel_path = child.relative_to(root)
+
+                # Remove the .py if it's there
+                name = '.'.join(rel_path.parts[:-1] + (rel_path.stem,)
+
+                try:
+                    import_module(f'gilbert.plugins.{name}')
+                except ImportError:
+                    pass  # Skip it
+                else:
+                    print(f'Loaded plugin: {name}')
+
+
+Now that we've imported the modules, how do we know what we got?
+
+You'll see here I'm using
+[`pathlib`](https://docs.python.org/3/library/pathlib.html).  If you haven't
+already discovered it, I highly recommend it as a more comfortable way to
+interact with files and paths.
+
+I'm also using `f-strings` for formatting. These were introduced in Python 3.6,
+and I find are easy for simple stuff, not to mention faster.
+
+## Step two: Registering the sub-classes
+
+Once again, modern Python comes to the rescue. As of Python 3.6, thanks to
+[PEP 487](https://www.python.org/dev/peps/pep-0487/) classes can now define a
+`__init_subclass__` method that is invoked whenever a sub-class of our class
+is defined.
+
+
+    class BaseThing:
+        _registry = {}
+
+        def __init_subclass__(cls, **kwargs):
+            super().__init_subclass__(cls, **kwargs)
+            cls._registry[cls.__name__] = cls
+
+
+You'll notice the use of `cls` and not `self` in the arguments - this is
+because this method is implicitly a ``classmethod``.
+
+Now, any time someone subclasses our `BaseThing`, we get called, and can add
+them to our "registry" of Things.
+
+## Bonus step:  Controlling the name
+
+But wait! There's more!
+
+What if you want to choose the name your Thing is registered as?  Or control
+other aspects of your registration?
+
+Thanks to the new syntax in Python 3, we can pass keyword arguments in the
+class statement:
+
+    class MyThing(BaseThing, name='SuperThing'):
+        ...
+
+This means in the `kwargs` passed to `BaseThing.__init_subclass__` will be a `name` key.
+
+It's advisable to specifically list the keyword arguments your class uses, so
+Python removes them from `kwargs`:
+
+        def __init_subclass__(cls, *, name=None, **kwargs):
+            super().__init_subclass__(cls, **kwargs)
+            if name is None:
+                name = cls.__name__
+            cls._registry[name] = cls
+
+
+## Writing a plugin
+
+So now to write a plugin for `gilbert`, you would layout your git repo something like:
+
+    +-- setup.py
+    +-- setup.cfg
+    +-- docs/
+    +-- src/
+        +-- gilbert/
+            +-- plugins/
+                +-- mything.py
+    +-- tests/
+
+Your `setup.py` can be the bare minimum:
+
+    from setuptools import setup
+
+    setup()
+
+Then your `setup.cfg` would look something like:
+
+    [metadata]
+    name = gilbert-mything
+    version = 0.0.1
+    description = A simple plugin for gilbert
+
+    [options]
+    zip_safe = False
+    packages = find:
+    package_dir =
+        =src
+    install_requires =
+        ...
+
+    [options.packages.find]
+    where=src

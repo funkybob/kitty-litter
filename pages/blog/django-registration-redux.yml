@@ -1,0 +1,258 @@
+title: Django Registration redux
+content_type: MarkdownPage
+date: 2018-08-14
+tags:
+  - code
+  - django
+  - forms
+  - registration
+---
+So, 4 years ago [already??] I wrote a post about a shortcut to getting "User
+registration with verification email", using very little code by leveraging the
+password reset machinery built into Django.
+
+Since then, of course, Django has moved on... and recently, the auth views were
+rewritten as class-based views, which changes the game entirely.
+
+As a result, I've committed to providing here an updated version of the
+previous post.
+
+A lot of the following is copied verbatim from the previous article, but I will
+update the docs links (from Django 1.7 to 2.1) and clarify where it's been
+found valuable.
+
+It's important to note that you should do all of this right at the very _start_ of your project, as advised [here](https://docs.djangoproject.com/en/2.1/topics/auth/customizing/#using-a-custom-user-model-when-starting-a-project)
+
+## Step 1: User model
+
+This step has not changed much. We follow the steps
+[here](https://docs.djangoproject.com/en/2.1/topics/auth/customizing/#substituting-a-custom-user-model)
+.
+
+We'll start an app called 'accounts' by running `manage.py startapp accounts`
+
+Then we'll create a User model in there, which inherits from `AbstractBaseUser`
+and `PermissionsMixin`.
+
+    from django.db import models
+    from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+
+    class User(AbstractBaseUser, PermissionsMixin):
+        USERNAME_FIELD = 'email'
+
+        email = models.EmailField(unique=True)
+        is_active = models.BooleanField(default=False)
+        is_staff = models.BooleanField(default=False)
+
+        # Admin expects these two methods.
+        def get_full_name(self):
+            return self.email
+
+        def get_short_name(self):
+            return self.email
+
+Add to this whatever other fields you record against all your users - name,
+avatar image, what have you.
+
+Why `AbstractBaseUser`, and not `AbstractUser`?  Because `AbstractUser` implements the
+default Django user model, and we don't want that.  Notably, it includes
+'username' as unique, and 'email' as not.
+
+`PermissionsMixin` gives us `is_superuser`, `groups` and `user_permissions`, as
+well as the right methods to participate in the normal permissions machinery.
+
+Now we also need to add a custom Manager to help the rest of Django.
+
+    from django.contrib.auth.models import BaseUserManager
+
+
+    class UserManager(BaseUserManager):
+
+        def _create_user(self, email, password, **kwargs):
+            user = self.model(
+                email=self.normalize_email(email),
+                is_active=True,
+                **kwargs
+            )
+            user.set_password(password)
+            user.save(using=self._db)
+            return user
+
+        def create_user(self, email, password, **kwargs):
+            kwargs.setdefault('is_staff', False)
+            kwargs.setdefault('is_superuser', False)
+            return self._create_user(email, password, **kwargs)
+
+        def create_superuser(self, email, password, **kwargs):
+            kwargs.setdefault('is_superuser', True)
+            kwargs.setdefault('is_staff', True)
+            return self._create_user(email, password, **kwargs)
+
+
+You may be wondering what "normalize_email" does?  That lower-cases the host
+name of the email address (everything right of the @) to avoid case clashes.
+Many people wonder why not also lower case the mailbox name (everything left of
+the @)? According to the RFCs, that's an invalid transform - you can assume
+host names are lower case-able, but not mailboxes.
+
+Next we tell our User model to use this by adding:
+
+    objects = UserManager()
+
+to your User model.
+
+Finally, set `AUTH_USER_MODEL` in your `settings.py`
+
+    AUTH_USER_MODEL = "accounts.User"
+
+
+## 2. Registration
+
+This is where the clever part comes.
+
+Instead of creating all our own code to manage sending the email and verifying
+the token, we can re-use the [existing password reset machinery](https://docs.djangoproject.com/en/2.1/topics/auth/default/#django.contrib.auth.views.PasswordResetView)
+that's built into Django!
+
+Let's face it, what's the difference between a verification email for registration, and one for password reset?
+
+We just need to hook in the existing views, and tweak them to use different
+templates.
+
+We will need to create a form, so in `accounts/forms.py` add:
+
+    from django import forms
+
+    from . import models
+
+
+    class RegistrationForm(forms.ModelForm):
+        class Meta:
+            model = models.User
+            fields = ['email']
+
+Notice we don't put the password here. Later when the users passes through the `PasswordResetConfirmView` their new password will be set.
+
+Next we create a sub-class of the default `PasswordResetForm`. In `PasswordResetView`, it's actually the form class that contains all the code to send the emails.
+
+This form has a `get_user` method which will query for Users with matching emails, as well as `is_active` being True, and will then filter for those having a "usable" password.
+
+We need to change how it finds the list of users to send emails, since we already have the User:
+
+    from django.contrib.auth.forms import PasswordResetForm
+
+
+    class RegistrationEmailForm(PasswordResetForm):
+        def __init__(self, user, *args, **kwargs):
+            self.user = user
+            super().__init__(*args, **kwargs)
+
+        def get_users(self, email):
+            return (self.user,)
+
+Now, we add our registration view to `accounts/views.py`:
+
+    from django.contrib.auth.views import PasswordResetView
+    from django.urls import reverse_lazy
+
+    from . import forms
+
+
+    class UserRegistrationView(PasswordResetView):
+        template_name = 'register/register_form.html'
+        form_class = forms.RegistrationForm
+        email_template_name = 'register/registration_email.txt'
+        # html_email_template_name = Set
+        subject_template_name = 'register/registration_subject.txt'
+        success_url = reverse_lazy('register-done')
+
+        def form_valid(self, form):
+            self.object = form.save(commit=False)
+            self.object.set_unusable_password()
+            self.object.is_active = True
+            self.object.save()
+
+            form = forms.RegistrationEmailForm(self.object, self.request.POST)
+            form.is_valid()  # Must trigger validation
+            return super().form_valid(form)
+
+So here we're taking the existing `PasswordResetView`, and overriding a bunch of
+attributes, as well as extending the `form_valid` method to save our User, then
+replace the form with our custom sub-class of `PasswordResetForm`.
+
+As a precaution, we set an unusable password on the user. This guarantees they can't log in, and must complete the email verification to set as password.
+
+Lastly we, create our `accounts/urls.py`. Instead of sub-classing all of the other views, we can override their config attributes when calling `as_view()`:
+
+    from django.contrib.auth import views as auth
+    from django.urls import path, reverse_lazy
+
+    from . import views
+
+
+    urlpatterns = [
+        path('register/',
+            views.UserRegistrationView.as_view(),
+            name='register'
+        ),
+        path('register/done/',
+            auth.PasswordResetDoneView.as_view(
+                template_name='register/register_done.html',
+            ),
+            name='register-done',
+        ),
+        path('register/<uidb64>/<token>/',
+            auth.PasswordResetConfirmView.as_view(
+                template_name='register/register_confirm.html',
+                success_url=reverse_lazy('accounts:register-complete'),
+            ),
+            name='register-confirm'
+        ),
+        path('register/complete/',
+            auth.PasswordResetCompleteView.as_view(
+                template_name='register/register_complete.html'
+            ),
+            name='register-complete'
+        ),
+
+    ]
+
+This is a near exact copy of `django.contrib.auth.urls`, but for three things:
+
+ 1. We're using our own `UserRegistrationView` instead of `PasswordResetView`
+ 1. We've changed the template_names.
+ 1. We've altered the success_urls to point to our own urls.
+
+Finally, hook these URLs into your root urls.py
+
+    urlpatterns = [
+        ...
+        path(r'accounts/', include('accounts.urls', namespace='accounts')),
+        ...
+    ]
+
+
+## Templates
+
+Remember to write the following templates:
+
+- register/register.html : Presents the registration form, including the `email` field.
+- register/registration_email.txt : Body of the verification email
+- register/registration_subject.txt : Subject-line of the verification email
+
+See [here](https://docs.djangoproject.com/en/2.1/topics/auth/default/#django.contrib.auth.views.PasswordResetView) for what context is provided.
+
+- register/register_done.html : Shown after the initial registration form is submitted, after the email is sent.
+
+This should instruct the user to check for the email.
+
+- register/register_confirm.html : Displayed when the user follows the email verification link.
+
+See [here](https://docs.djangoproject.com/en/2.1/topics/auth/default/#django.contrib.auth.views.PasswordResetConfirmView) for what context is provided.
+
+- register/register_complete.html : Final step, once password is updated.
+
+
+## Credit
+
+Thanks xrogaan for all your feedback!

@@ -1,0 +1,12 @@
+content_type: Menu
+sort_by: -date
+filter_by:
+  all:
+    - eq:
+      - attr: ["content_type"]
+      - "MarkdownPage"
+    - startswith:
+      - attr: ["name"]
+      - "blog/"
+    - attr: ['date']
+---

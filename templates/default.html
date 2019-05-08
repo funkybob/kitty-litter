@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ this.title }}</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header>{{ this.title }}</header>
+    <nav>
+        {{ site.content['menu/main.yml'].generate_content() }}
+    </nav>
+    <main>{% block content %}{{ this.content }}{% endblock %}</main>
+    <footer> Copyright &copy; 2019 Curtis Maloney </footer>
+  </body>
+</html>

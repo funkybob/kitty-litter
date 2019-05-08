@@ -1,0 +1,248 @@
+title: The simplest API
+content_type: MarkdownPage
+date: 2016-07-17
+tags:
+  - csrf
+  - decorators
+  - django
+  - forms
+  - python
+---
+
+So, I saw a post recently about [Build an API under 30 lines of code](https://impythonist.wordpress.com/2015/07/12/build-an-api-under-30-lines-of-code-with-python-and-flask/) using Flask.
+
+I started wondering what it would take to do the same in Django.
+
+The two main tools we're going go use are `JsonResponse` and `ModelForm`.
+
+`JsonResponse` is a sub-class of `HttpResponse` that JSON encodes the data you pass it.
+
+And the `ModelForm` has a way to pull field values from a model instance.
+
+So... let's create a project:
+
+    $ virtualenv -p python3 env
+    $ . env/bin/activate
+    $ pip install Django
+    $ django-admin startproject salary
+    $ cd salary
+
+Add our project as an app, by adding "salary", to `INSTALLED_APPS`.
+
+# Models
+
+Into ``salary/models.py`` put:
+
+    from django.db import models
+
+
+    class Salary(models.Model):
+        name = models.CharField(max_length=200)
+        position_title = models.CharField(max_length=200)
+        department = models.CharField(max_length=200, db_index=True)
+        salary = models.DecimalField(max_digits=10, decimal_places=2)
+
+And create the migration:
+
+    $ python manage.py makemigrations salary
+    $ python manage.py migrate
+
+# Forms
+
+Into ``salary/forms.py`` put:
+
+    from django import forms
+
+    from .models import Salary
+
+
+    class SalaryForm(forms.ModelForm):
+        class Meta:
+            model = Salary
+            fields = '__all__'
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            if 'instance' in kwargs:
+                for field in self.fields.values():
+                    field.required = False
+
+# Views
+
+Next, we need to start providing some views.
+
+So let's create ``salary/views.py``:
+
+    from django.http import JsonResponse
+    from django.views.generic import ListView, DetailView
+
+    from .forms import SalaryForm
+    from .models import Salary
+
+
+    class JsonMixin:
+        response_class = JsonResponse
+        content_type = 'application/json'
+        form_class = SalaryForm
+
+        def reduce_object(self, obj):
+            form = self.form_class(instance=obj)
+            return form.initial
+
+        def render_to_response(self, context, **kwargs):
+            return self.response_class(context, safe=False, **kwargs)
+
+        def render_errors(self, form, **kwargs):
+            data = {
+                key: list(value)
+                for key, value in form.errors.items()
+            }
+            return self.response_class(data, status=400)
+
+
+    class SalaryList(JsonMixin, ListView):
+        model = Salary
+
+        def get_context_data(self, **kwargs):
+            return [
+                self.reduce_object(obj)
+                for obj in self.get_queryset()
+            ]
+
+        def post(self, request, *args, **kwargs):
+            form = self.form_class(request.POST)
+            if form.is_valid():
+                obj = form.save()
+                return self.render_to_response(self.reduce_object(obj))
+            return self.render_errors(form)
+
+
+    class SalaryDetail(JsonMixin, DetailView):
+        model = Salary
+        response_class = JsonResponse
+
+        def get_context_data(self, **kwargs):
+            return self.reduce_object(self.get_object())
+
+        def post(self, request, *args, **kwargs):
+            form = self.form_class(request.POST, instance=self.get_object())
+            if form.is_valid():
+                obj = form.save()
+                return self.render_to_response(self.reduce_object(obj))
+            else:
+                return self.render_errors(form)
+
+# URLs
+
+And finally, update our ``salary/urls.py``:
+
+    from django.conf.urls import url
+    from django.views.decorators.csrf import csrf_exempt
+
+    from . import views
+
+
+    urlpatterns = [
+        url(r'^$', csrf_exempt(views.SalaryList.as_view())),
+        url(r'(?P<pk>\d+)/$', csrf_exempt(views.SalaryDetail.as_view())),
+    ]
+
+# Helper
+
+Now an import script to bring the CSV records.
+
+We create ``import.py`` which is just a simple loop using `csv.DictReader` and our `ModelForm`.
+
+    import sys
+
+    from csv import DictReader
+
+    import django
+
+    django.setup()
+
+    from salary.models import Salary
+    from salary.forms import SalaryForm
+
+
+    # Name,Position Title,Department,Employee Annual Salary
+    NAME = {
+        'Name': 'name',
+        'Position Title': 'position_title',
+        'Department': 'department',
+        'Employee Annual Salary': 'salary',
+    }
+
+    for row in DictReader(open(sys.argv[1])):
+        rec = {
+            NAME[key]:  value.strip().strip('$')
+            for key, value in row.items()
+        }
+        form = SalaryForm(rec)
+        if form.is_valid():
+            form.save()
+        else:
+            print(form.errors)
+
+Now import the data:
+
+    $ python import.py Current_Employee_Names__Salaries__and_Position_Titles.csv
+
+# Result
+
+    $ wc -l salary/forms.py salary/views.py salary/urls.py salary/models.py
+      15 salary/forms.py
+      58 salary/views.py
+      10 salary/urls.py
+       8 salary/models.py
+      91 total
+
+So, it's a few more than 30 lines, but it also uses _only_ django -- **no** 3rd party apps.
+
+A GET to '/' returns a list looking like:
+
+    [
+      {
+        "salary": "90744.00",
+        "department": "WATER MGMNT",
+        "name": "AARON,  ELVIA J",
+        "position_title": "WATER RATE TAKER",
+        "id": 1
+      },
+      {
+        "salary": "84450.00",
+        "department": "POLICE",
+        "name": "AARON,  JEFFERY M",
+        "position_title": "POLICE OFFICER",
+        "id": 2
+      },
+
+... and so on.
+
+You can POST to that URL to create a new record, with helpful error messages:
+
+    {
+      "salary": [
+        "This field is required."
+      ],
+      "department": [
+        "This field is required."
+      ],
+      "position_title": [
+        "This field is required."
+      ]
+    }
+
+A GET to /(pk)/ will yield a single record:
+
+    {
+      "salary": "90744.00",
+      "department": "WATER MGMNT",
+      "name": "Walker McNulty",
+      "position_title": "WATER RATE TAKER",
+      "id": 1
+    }
+
+And POSTing to that same URL can update the record.  The `__init__` method in the form ensures all fields are optional.
+
+I would have preferred to use PUT to update, but it's actually not so easy to get Django to parse a POST body on a PUT request because, technically, it can't assume one.

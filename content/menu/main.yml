@@ -1,0 +1,6 @@
+content_type: Menu
+filter_by:
+  contains:
+    - attr: ['tags']
+    - 'in-menu'
+---

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Vanilla JS meets Django's CSRF</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header>Vanilla JS meets Django's CSRF</header>
+    <nav>
+        <ul>
+
+  <li><a href="/blog/index.html">Blog</a></li>
+
+  <li><a href="/index.html">Welcome</a></li>
+
+</ul>
+
+    </nav>
+    <main><p>I was recently helping someone who was trying to learn about building web sites, and was trying to avoid learning too many things at once, so opted to avoid JS libraries for now.</p>
+
+<p>As the discussion progressed, they ran into Django's <a href="https://docs.djangoproject.com/en/1.8/ref/csrf/">Cross Site Request Forgery protection</a> which stumped them.</p>
+
+<p>So, as I was about to link them to the part of the docs that shows how to add the CSRF token from the cookie to your headers, I realised it all assumes you're using jQuery.</p>
+
+<p>Now, that wasn't a bad assumption at the time, but it wasn't viable for this discussion.  So I decided to put my hand to writing a vanilla JS solution.</p>
+
+<p>First step: get the CSRF token cookie.</p>
+
+<pre><code>//
+// Find the CSRF Token cookie value
+//
+
+function parse_cookies() {
+    var cookies = {};
+    if (document.cookie &amp;&amp; document.cookie !== '') {
+        document.cookie.split(';').forEach(function (c) {
+            var m = c.trim().match(/(\w+)=(.*)/);
+            if(m !== undefined) {
+                cookies[m[1]] = decodeURIComponent(m[2]);
+            }
+        });
+    }
+    return cookies;
+}
+var cookies = parse_cookies();
+</code></pre>
+
+<p>The <code>parse_cookies</code> function first checks if there's any cookies, and if so:</p>
+
+<ol>
+<li>Splits on ';'</li>
+<li>Trims leading/trailing whitespace</li>
+<li>Applies a RegEx to split the name from the value</li>
+<li>Adds each matched name/value pair to an Object, unescaping the value.</li>
+</ol>
+
+<p>This code is using "modern" JS features like Array.forEach, and String.trim.</p>
+
+<p>It only needs to be run once per page load, in theory;</p>
+
+<pre><code>//
+// SEND THE FORM!
+//
+var request = new XMLHttpRequest();
+request.setRequestHeader('X-CSRFToken', cookies['csrftoken']);
+request.open("POST", "/path/to/view/");
+var formElement = document.querySelector("#myform");
+request.send(new FormData(formElement));
+</code></pre>
+
+<p>This is almost cut'n'pasted from the Mozilla's sample XML usage, but we include setRequestHeader to add the  X-CSRFToken header.</p>
+
+<p>Then we use the new FormData API to serialise all the fields in our field element, and post them.</p>
+
+<p>Please post comments on any browsers this does or does not work in!</p>
+</main>
+    <footer> Copyright &copy; 2019 Curtis Maloney </footer>
+  </body>
+</html>

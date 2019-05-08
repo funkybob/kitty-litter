@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Learning Pony</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header>Learning Pony</header>
+    <nav>
+        <ul>
+
+  <li><a href="/blog/index.html">Blog</a></li>
+
+  <li><a href="/index.html">Welcome</a></li>
+
+</ul>
+
+    </nav>
+    <main><p>I've recently started teaching myself an interesting language I discovered on the LLVM project page : <a href="http://ponylang.org">Pony</a></p>
+
+<h1>Projects</h1>
+
+<p>First, I tried rewriting <a href="https://github.com/funkybob/keyster">keyster</a> - a simple Key/Value store that talks over UDP.</p>
+
+<p>This took a tiny 44 lines, and produced something almost as fast as the raw C verison.</p>
+
+<pre><code>use "collections"
+use "logger"
+use "net"
+
+class HandleUDPNotify is UDPNotify
+  let _hmap: Map[String, String] = Map[String, String].create()
+
+  fun ref not_listening(sock: UDPSocket ref): None val =&gt;
+    """
+    """
+
+  fun ref received(sock: UDPSocket ref, data: Array[U8] iso, from: NetAddress) =&gt;
+    let src = recover val consume data end
+    if src.size() == 0 then
+      return
+    end
+    var cmd = String.from_array(src.trim(0, 1))
+    var key = try String.from_array(src.trim(1, src.find(0, 0))) else "" end
+    var value = String.from_array(src.trim(2 + key.size()))
+
+    var result: String = ""
+    match cmd
+    | "G" =&gt; try result = _hmap(key) end
+    | "A" =&gt; try _hmap.insert_if_absent(key, value) end
+    | "S" =&gt; try _hmap.insert(key, value) end
+    | "D" =&gt; try _hmap.remove(key) end
+    else
+      result = _hmap.size().string()
+    end
+
+    var rsp: Array[U8] iso = recover iso Array[U8].create(2 + key.size() + result.size()) end
+    rsp.append(cmd.lower())
+    rsp.append(key)
+    rsp.push(0)
+    rsp.append(result)
+    sock.write(consume rsp, from)
+
+
+actor Main
+  new create(env: Env) =&gt;
+    let logger = StringLogger(Info, env.out)
+    logger.log("Started...\n")
+    try
+      let socket = UDPSocket(env.root as AmbientAuth, HandleUDPNotify, "", "6347")
+    end
+</code></pre>
+
+<p>Now, to anyone familiar with various programming languages, a lot of this will look quite familiar.  What may stand our as odd, though, is constructs such as "consume", "recover", and the annotations like "iso", "ref", "var".  These are to do with rcaps.</p>
+
+<p>So far the most frustrating part to learn is the <a href="https://tutorial.ponylang.org/capabilities/reference-capabilities.html">Reference Capabilities</a> or "rcaps".  These tell the compiler what access to allow to each variable : mutable, immutable, shareable, and so on...</p>
+
+<p>That said, they also allow it to detect dangerous behaviours, and run the actor system completely lock free.</p>
+
+<p>Is this frustration worth the guarantee that "if it compiles, it won't crash", as well as "guaranteed deadlock free"?</p>
+
+<p>Well, that remains to be seen, but so far it's very, very promising.</p>
+</main>
+    <footer> Copyright &copy; 2019 Curtis Maloney </footer>
+  </body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Environment driven config</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header>Environment driven config</header>
+    <nav>
+        <ul>
+
+  <li><a href="/blog/index.html">Blog</a></li>
+
+  <li><a href="/index.html">Welcome</a></li>
+
+</ul>
+
+    </nav>
+    <main><p>Some years ago, I adapted the work of a coworker and released it as <code>django-classy-settings</code>, a way to define Django settings using a class, allowing a clean and easy way to derive local / production settings from a common base, and opening the way to allowing composition, too.</p>
+
+<p>Recently I was faced with a similar problem at my current job, though not using Django this time.</p>
+
+<p>Another big difference is my current job is using Python3.6 (and eager to move to 3.7 ASAP), opening other opportunities.</p>
+
+<h2>Setting the scene</h2>
+
+<p>They already had a config module that pulled values from the environment [for most of them], and pushed them through helper functions for casting types [like bools, ints, etc]</p>
+
+<p>This would look something like:</p>
+
+<pre><code>USE_MAGIC = parse_bool(os.getenv('USE_MAGIC', False))
+
+DATABASE_NAME = os.getenv('DATABASE_NAME', 'production-database-1')
+DATABASE_PORT = int(os.getenv('DATABASE_PORT', 5432))
+</code></pre>
+
+<p>However, there were 2 projects sharing a common base, the base having its required settings, and the two others needing their own additional settings.</p>
+
+<p>Anyone who's been at this game long enough knows what happened next: they diverged. The helper functions weren't shared, the settings value defaults weren't in sync, etc.</p>
+
+<h2>The "obvious" solution</h2>
+
+<p>So, the first idea was, simply, to move the shared settings into the base project, along with the helper functions.</p>
+
+<p>This would work, and avoid most of the problems, but still leaves writing and reading the config to be somewhat laborious.</p>
+
+<h2>The game plan</h2>
+
+<p>So when it comes down to it, what we have is a list of names, types, and defaults.</p>
+
+<p>We could write this as a list of tuples describing each, but there's a more Pythonic approach: type annotations.</p>
+
+<p>Imagine if we could rewrite the above example as:</p>
+
+<pre><code>class Config:
+    USE_MAGIC: bool = False
+    DATABASE_NAME = 'testing-database-1'
+    DATABASE_PORT: int = 5432
+</code></pre>
+
+<p>Wouldn't that be easy, and clear?</p>
+
+<h2>Enter <code>confucius</code></h2>
+
+<p>So after a say of playing about [and some very welcome discussion and help from the people on Freenode IRC #python ] I wrote and published <a href="https://pypi.org/project/confucius/">confucius</a>.</p>
+
+<p>The above code becomes:</p>
+
+<pre><code>from confucius import BaseConfig
+
+class Config(BaseConfig):
+    USE_MAGIC: bool = False
+    DATABASE_NAME = 'testing-database-1'
+    DATABASE_PORT: int = 5432
+</code></pre>
+
+<p>Accessing any of these attributes of the class will cause a lookup in <code>os.getenv</code>, falling back to the default.  The resulting value is then passed to the "type".</p>
+
+<p>Then the rest of my code can access the Config singleton ( <strong>gasp</strong> did he say <em>singleton</em> ? In Python?? )</p>
+
+<pre><code>from config import Config
+
+db = connection(Config.DATABASE_NAME, port=Config.DATABASE_PORT)
+</code></pre>
+
+<h2>Derived values</h2>
+
+<p>I'm not yet 100% happy with this step, but it's still clean.  You can have values dependent on others:</p>
+
+<pre><code>class Config(BaseConfig):
+    USE_MAGIC: bool = False
+
+    def WIBBLE(self) -&gt; int:
+        return 1234 if self.USE_MAGIC else 4321
+</code></pre>
+
+<p>Not that to access <code>Config.WIBBLE</code> you treat it like an attribute, no need to call it.</p>
+
+<h3>And that's it?</h3>
+
+<p>Well, no, there's more!</p>
+
+<p>A system that's not extensible is no fun.  So, you can register your own type parsers!</p>
+
+<pre><code>import json
+
+class Config(BaseConfig):
+    __types__ = {
+        json: lambda v: json.loads(v) if isinstance(v, str) else v
+    }
+
+    DATABASES: json = {'default': {'NAME': 'dummy', 'ENGINE': 'sqlite'}}
+</code></pre>
+
+<p>The <code>__types__</code> dict will be merged with those of all parent classes [in MRO order] so you don't have to worry about redefining anything.</p>
+
+<h2>But wait, there's one more thing!</h2>
+
+<p>As a concession to how <code>django-classy-settings</code> worked, the class also provides an <code>as_dict</code> method to get all the attributes and values at once.</p>
+
+<p>You can then use this in your django settings module:</p>
+
+<pre><code>import os
+
+class Settings(BaseConfig):
+    ....
+
+globals().update(Settings.as_dict())
+</code></pre>
+</main>
+    <footer> Copyright &copy; 2019 Curtis Maloney </footer>
+  </body>
+</html>

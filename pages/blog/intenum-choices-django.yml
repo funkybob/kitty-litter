@@ -1,0 +1,108 @@
+title: IntEnum for Choices in Django
+content_type: MarkdownPage
+date: 2015-10-28
+tags:
+  - django
+  - enum
+  - python
+---
+So, we've all needed a `choices` list in Django at one time or another, right?
+
+And from the docs we see the example code:
+
+    YEAR_IN_SCHOOL_CHOICES = (
+        ('FR', 'Freshman'),
+        ('SO', 'Sophomore'),
+        ('JR', 'Junior'),
+        ('SR', 'Senior'),
+    )
+
+Which is then quickly amended to:
+
+    class Student(models.Model):
+        FRESHMAN = 'FR'
+        SOPHOMORE = 'SO'
+        JUNIOR = 'JR'
+        SENIOR = 'SR'
+        YEAR_IN_SCHOOL_CHOICES = (
+            (FRESHMAN, 'Freshman'),
+            (SOPHOMORE, 'Sophomore'),
+            (JUNIOR, 'Junior'),
+            (SENIOR, 'Senior'),
+        )
+        year_in_school = models.CharField(max_length=2,
+                                          choices=YEAR_IN_SCHOOL_CHOICES,
+                                          default=FRESHMAN)
+
+Why?  Because this avoids the problem of `magic values`, an aspect of keeping DRY.
+
+Magic values are constants that have meaning; they become a problem [especially with numbers] because you can't be certain if the values are coincidentally the same (i.e. this value is the 2px margin we want in common, but that one just happens to _also_ be 2px...).  Much better to give them names, so we can know what the value represents, and know it's not coincidentally the same as another value.
+
+It also means changing the value throughout your code can happen in once place.
+
+Now the values are defined in one place, and easy to access.  Instead of having to remember to use 'JR', you can put Student.JUNIOR ; namespacing is thrown in free!
+
+What's wrong with this?  Well, nothing, really... except when you have multiple choice fields on the same model.
+
+## A possible solution...
+
+As of Python 3.4, we have the [enum](https://docs.python.org/3/library/enum.html) lib.  For older Python's, there's the `Enum34` package.
+
+This gives us the use `Enum` and `IntEnum` classes.
+
+The above example could be rewritten as:
+
+    class Student(models.Model):
+        class YEAR(Enum):
+            FRESHMAN = 'FR'
+            SOHPOMORE = 'SO'
+            JUNIOR = 'JR'
+            SENIOR = 'SR'
+
+Now we can reference the values using Student.YEAR.JUNIOR.  Not bad.
+
+    >>> Student.YEAR.JUNIOR
+    <YEAR.JUNIOR: 'JR'>
+
+Each values provides its name and value as attributes:
+
+    >>> Student.YEAR.JUNIOR.name
+    'JUNIOR'
+    >>> Student.YEAR.JUNIOR.value
+    'JR'
+
+This helps us with our last step: to provide this in a way `choices=` will accept.
+
+Fortunately, Enum _classes_ are iterable:
+
+    >>> list(Student.YEAR)
+    [<YEAR.FRESHMAN: 'FR'>, <YEAR.SOHPOMORE: 'SO'>, <YEAR.JUNIOR: 'JR'>, <YEAR.SENIOR: 'SR'>]
+
+So we can build choices by just:
+
+        year_in_school = models.CharField(max_length=2,
+                                              choices=((x.value, x.name.title()) for x in YEAR),
+                                              default=FRESHMAN)
+
+## IntEnum
+
+When your values are all integers, there's `IntEnum`.
+
+    class STATE(IntEnum):
+        CANCELLED = -1
+        PENDING = 0
+        DECLINED = 1
+        APPROVED = 2
+
+This provides the same thing, but guarantees the values are integers.
+
+## Belt and braces
+
+Finally, just to protect us from us... there's the `enum.unique` decorator.  This helps ensure that no two names have the same value.
+
+    @enum.unique
+    class STATE(enum.IntEnum):
+        CANCELLED = -1
+        PENDING = 0
+        DECLINED = 1
+        APPROVED = 2

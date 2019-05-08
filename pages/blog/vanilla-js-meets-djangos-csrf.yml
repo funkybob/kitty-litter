@@ -1,0 +1,61 @@
+title: Vanilla JS meets Django's CSRF
+content_type: MarkdownPage
+date: 2015-08-28
+tags:
+  - csrf
+  - django
+  - javascript
+---
+I was recently helping someone who was trying to learn about building web sites, and was trying to avoid learning too many things at once, so opted to avoid JS libraries for now.
+
+As the discussion progressed, they ran into Django's [Cross Site Request Forgery protection](https://docs.djangoproject.com/en/1.8/ref/csrf/) which stumped them.
+
+So, as I was about to link them to the part of the docs that shows how to add the CSRF token from the cookie to your headers, I realised it all assumes you're using jQuery.
+
+Now, that wasn't a bad assumption at the time, but it wasn't viable for this discussion.  So I decided to put my hand to writing a vanilla JS solution.
+
+First step: get the CSRF token cookie.
+
+    //
+    // Find the CSRF Token cookie value
+    //
+
+    function parse_cookies() {
+        var cookies = {};
+        if (document.cookie && document.cookie !== '') {
+            document.cookie.split(';').forEach(function (c) {
+                var m = c.trim().match(/(\w+)=(.*)/);
+                if(m !== undefined) {
+                    cookies[m[1]] = decodeURIComponent(m[2]);
+                }
+            });
+        }
+        return cookies;
+    }
+    var cookies = parse_cookies();
+
+The `parse_cookies` function first checks if there's any cookies, and if so:
+
+1. Splits on ';'
+2. Trims leading/trailing whitespace
+3. Applies a RegEx to split the name from the value
+4. Adds each matched name/value pair to an Object, unescaping the value.
+
+This code is using "modern" JS features like Array.forEach, and String.trim.
+
+It only needs to be run once per page load, in theory;
+
+    //
+    // SEND THE FORM!
+    //
+    var request = new XMLHttpRequest();
+    request.setRequestHeader('X-CSRFToken', cookies['csrftoken']);
+    request.open("POST", "/path/to/view/");
+    var formElement = document.querySelector("#myform");
+    request.send(new FormData(formElement));
+
+This is almost cut'n'pasted from the Mozilla's sample XML usage, but we include setRequestHeader to add the  X-CSRFToken header.
+
+Then we use the new FormData API to serialise all the fields in our field element, and post them.
+
+Please post comments on any browsers this does or does not work in!

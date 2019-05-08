@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Plugins and auto-discovery in Python</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header>Plugins and auto-discovery in Python</header>
+    <nav>
+        <ul>
+
+  <li><a href="/blog/index.html">Blog</a></li>
+
+  <li><a href="/index.html">Welcome</a></li>
+
+</ul>
+
+    </nav>
+    <main><p>Whilst working on my toy static site generator
+<a href="https://github.com/funkybob/gilbert">gilbert</a>, I decided I wanted it to use a
+plugin pattern, so you could add new content types just by installing their
+packages.</p>
+
+<p>This would require some way for my code to automatically find all the related
+packages, import them, and register their content type sub-classes.</p>
+
+<p>But how?</p>
+
+<h2>Enter "implicit namespace packages"</h2>
+
+<p>Added in Python 3.3,
+<a href="https://www.python.org/dev/peps/pep-0420/">PEP 420</a> gives us "implicit
+namespace packages", which let many packages contribute to the same package
+namespace, simply by:</p>
+
+<ul>
+<li>using the same name, and</li>
+<li>omitting the <code>__init__.py</code></li>
+</ul>
+
+<p>Not only that, but Python, as part of the import mechanism, will build a list
+of paths which contribute to the namespace. This gives us a clean way to work
+out what's been installed.</p>
+
+<h2>Step one: Finding all the packages</h2>
+
+<p>For this, we're going to use the namespace <code>gilbert.plugins</code>.</p>
+
+<p>Next, we iterate over the <code>__path__</code> list, and import all the packages and
+modules we can find.</p>
+
+<pre><code>from importlib import import_module
+from pathlib import Path
+
+
+def find_plugins():
+    from gilbert import plugins
+
+    for path in plugins.__path__:
+        root = Path(path)  # Get a Path object for the source
+        print(f"Searching {root} for plugins...")
+
+        for child in root.iterdir():
+            # Only try to import things that look like packages or modules.
+            if not (
+                child.is_dir() or
+                (child.is_file() and child.suffix == '.py')
+            ):
+                continue
+
+            # Find its path relative to the package
+            rel_path = child.relative_to(root)
+
+            # Remove the .py if it's there
+            name = '.'.join(rel_path.parts[:-1] + (rel_path.stem,)
+
+            try:
+                import_module(f'gilbert.plugins.{name}')
+            except ImportError:
+                pass  # Skip it
+            else:
+                print(f'Loaded plugin: {name}')
+</code></pre>
+
+<p>Now that we've imported the modules, how do we know what we got?</p>
+
+<p>You'll see here I'm using
+<a href="https://docs.python.org/3/library/pathlib.html">&lt;code&gt;pathlib&lt;/code&gt;</a>.  If you haven't
+already discovered it, I highly recommend it as a more comfortable way to
+interact with files and paths.</p>
+
+<p>I'm also using <code>f-strings</code> for formatting. These were introduced in Python 3.6,
+and I find are easy for simple stuff, not to mention faster.</p>
+
+<h2>Step two: Registering the sub-classes</h2>
+
+<p>Once again, modern Python comes to the rescue. As of Python 3.6, thanks to
+<a href="https://www.python.org/dev/peps/pep-0487/">PEP 487</a> classes can now define a
+<code>__init_subclass__</code> method that is invoked whenever a sub-class of our class
+is defined.</p>
+
+<pre><code>class BaseThing:
+    _registry = {}
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(cls, **kwargs)
+        cls._registry[cls.__name__] = cls
+</code></pre>
+
+<p>You'll notice the use of <code>cls</code> and not <code>self</code> in the arguments - this is
+because this method is implicitly a <code>classmethod</code>.</p>
+
+<p>Now, any time someone subclasses our <code>BaseThing</code>, we get called, and can add
+them to our "registry" of Things.</p>
+
+<h2>Bonus step:  Controlling the name</h2>
+
+<p>But wait! There's more!</p>
+
+<p>What if you want to choose the name your Thing is registered as?  Or control
+other aspects of your registration?</p>
+
+<p>Thanks to the new syntax in Python 3, we can pass keyword arguments in the
+class statement:</p>
+
+<pre><code>class MyThing(BaseThing, name='SuperThing'):
+    ...
+</code></pre>
+
+<p>This means in the <code>kwargs</code> passed to <code>BaseThing.__init_subclass__</code> will be a <code>name</code> key.</p>
+
+<p>It's advisable to specifically list the keyword arguments your class uses, so
+Python removes them from <code>kwargs</code>:</p>
+
+<pre><code>    def __init_subclass__(cls, *, name=None, **kwargs):
+        super().__init_subclass__(cls, **kwargs)
+        if name is None:
+            name = cls.__name__
+        cls._registry[name] = cls
+</code></pre>
+
+<h2>Writing a plugin</h2>
+
+<p>So now to write a plugin for <code>gilbert</code>, you would layout your git repo something like:</p>
+
+<pre><code>+-- setup.py
++-- setup.cfg
++-- docs/
++-- src/
+    +-- gilbert/
+        +-- plugins/
+            +-- mything.py
++-- tests/
+</code></pre>
+
+<p>Your <code>setup.py</code> can be the bare minimum:</p>
+
+<pre><code>from setuptools import setup
+
+setup()
+</code></pre>
+
+<p>Then your <code>setup.cfg</code> would look something like:</p>
+
+<pre><code>[metadata]
+name = gilbert-mything
+version = 0.0.1
+description = A simple plugin for gilbert
+
+[options]
+zip_safe = False
+packages = find:
+package_dir =
+    =src
+install_requires =
+    ...
+
+[options.packages.find]
+where=src
+</code></pre>
+</main>
+    <footer> Copyright &copy; 2019 Curtis Maloney </footer>
+  </body>
+</html>

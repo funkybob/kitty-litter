@@ -1,0 +1,7 @@
+title: Blog
+template: blog_index.html
+tags:
+  - in-menu
+---
+
+Here are my blog posts!
