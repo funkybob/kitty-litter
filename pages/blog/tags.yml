@@ -1,8 +1,10 @@
-content_type: TagCloud
+content_type: TagIndex
+title: Tags
 exclude_tags:
   - in-menu
 filter_by:
   startswith:
     - attr: ['name']
     - 'blog/'
+
 ---
