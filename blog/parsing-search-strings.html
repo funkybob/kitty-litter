@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Parsing search strings</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header>Parsing search strings</header>
+    <nav>
+        <ul>
+
+  <li><a href="/blog/index.html">Blog</a></li>
+
+  <li><a href="/index.html">Welcome</a></li>
+
+</ul>
+
+    </nav>
+    <main><p>We've all had to write a search form at some point.  Beyond simple cases, you reach for the big guns, like haystack, et al.</p>
+
+<p>But what about when it's just something simple?  What if you want to, for instance, let people search your blog posts?</p>
+
+<p>In django, that can be done simply with:</p>
+
+<pre><code>Blog.objects.filter(Q(title__icontains=word) | Q(body__icontains=word))
+</code></pre>
+
+<p>Which is fine, until someone wants to look for a post on, for instance "django" and "cookies", as opposed to the phrase "django cookies".</p>
+
+<p>So, we need to split up the search terms, and iteratively filter for them:</p>
+
+<pre><code>qset = Blog.posts.all()
+for term in terms.split(' '):
+    qset = qset.filter(Q(title__icontains=term) | Q(body__icontains=term))
+</code></pre>
+
+<p>Which is all great, until you want to search for "apt-get install" and "postgres" as separate terms.  Reflexively you're probably thinking you'd do just that - put quotes around the terms to force groupings.  But how do you parse that?</p>
+
+<h2>Stdlib to the rescue!</h2>
+
+<p>Of course, someone's had to do this before, and there's a lib for that.  But it's not made for searching.  It's the <a href="https://docs.python.org/2/library/shlex.html">shlex</a> library.</p>
+
+<pre><code>&gt;&gt;&gt; import shlex
+&gt;&gt;&gt; shlex.split('"apt-get install" django')
+['apt-get install', 'django']
+</code></pre>
+
+<p>And it's that simple?  Well, not quite.  If someone leaves unbalanced quotes [or is trying to search for a measurement in inches] shlex will not be happy:</p>
+
+<pre><code>&gt;&gt;&gt; shlex.split('macbook 13"')
+Traceback (most recent call last):
+...
+ValueError: No closing quotation
+</code></pre>
+
+<p>To solve this we need to go just a little bit deeper.  The shlex.split function is really a wrapper for the shlex.shlex class, in a default and [generally] useful configuration.</p>
+
+<p>We need to configure a shlex to our needs.</p>
+
+<pre><code>from shlex import shlex
+
+def parse_search_terms(terms):
+    lexer = shlex(terms)
+    lexer.commenters = ''
+    lexer.quotes = '"\''
+
+    while True:
+        term = lexer.get_token()
+        if not term:
+             break
+        yield term
+</code></pre>
+
+<p>Now we have a generator what will yield search terms, and can now easily filter our queryset!</p>
+
+<pre><code>&gt;&gt;&gt; list(parse_search_terms('13" macbook'))
+['13"', 'macbook']
+</code></pre>
+</main>
+    <footer> Copyright &copy; 2019 Curtis Maloney </footer>
+  </body>
+</html>

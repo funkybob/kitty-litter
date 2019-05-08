@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Serialiser in a hurry</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header>Serialiser in a hurry</header>
+    <nav>
+        <ul>
+
+  <li><a href="/blog/index.html">Blog</a></li>
+
+  <li><a href="/index.html">Welcome</a></li>
+
+</ul>
+
+    </nav>
+    <main><p>Serialisers are increasingly important now that most web apps are just APIs for the JavaScript to consume.</p>
+
+<p>Serialisers help to reduce your living code objects into simpler types that can be encoded in your serialisation format [typically JSON].  After all, JSON has no date or time types, no classes, etc.</p>
+
+<p>In the Django world, modern REST API libraries separate their Serialiser from the views, and go to great lengths to make them easy to configure, simple to use, and fast.  They also support returning your "deflated" data into live code objects.</p>
+
+<p>However, sometimes you don't need all that.  You know what you need, and it's simple.</p>
+
+<h2>The goal</h2>
+
+<p>A simple and fast way to turn our object's attributes into a dict of values.</p>
+
+<h2>The tools</h2>
+
+<p>So I've cobbled together a cheeky solution using two great tools from Python's standard library:  operator.attrgetter and collections.namedtuple</p>
+
+<h2>The steps</h2>
+
+<p>First, attrgetter is a factory that produces a function that, when called with an argument, will retrieve an attribute from it.  It's like a partial on getattr.</p>
+
+<pre><code>from operator import attrgetter
+
+g = attrgetter('a')
+
+g(b)
+# Is the same as
+getattr(b, 'a')
+</code></pre>
+
+<p>So how does this help us?  Well, the brains behind Python didn't stop there.  You can pass a list of attributes to attrgetter, and the resulting function will return a tuple of all of those attributes.</p>
+
+<p>But wait, there's more!  If the names you pass contains a dot ('.') then attrgetter will treat that like normal Python syntax, and get the nested attribute.</p>
+
+<p>By now, I'm sure you can see this can be a simple, and efficient, way to rip all the values we want from out objects.  Efficient, because it's implemented as a Python builtin, which means it's in C.</p>
+
+<pre><code>g = attrgetter('id', 'name', 'dob', 'profile.avatar.url')
+</code></pre>
+
+<p>But this only gets us part way, because for JSON we want a dict, not a tuple.  Also, we want a way to alias attribute names, especially when they're nested lookups.</p>
+
+<p>Enter namedtuple.  This is another factory that produces a sub-class of tuple, which has properties defined on it to access positional values by name.  In fact, it does this using a sibling of attrgetter - itemgetter.</p>
+
+<pre><code>MyTuple = namedtuple('MyTuple', 'id name dob avatar')
+
+t = MyTuple._make(('1', 'bob', '1970-01-01', '/media/avatar.jpg'))
+
+t.dob == '1970-01-01'  # True
+t[2] == '1970-01-01'  # True
+</code></pre>
+
+<p>The last piece of the puzzle is that namedtuple has an "_asdict" method...</p>
+
+<p>So... how does this help us?</p>
+
+<ol>
+<li>Write a dict that maps output names to source fields.</li>
+<li>Generate an attrgetter from the values.</li>
+<li>Generate a namedtuple from the keys.</li>
+<li>PROFIT!</li>
+</ol>
+
+<h1>The result</h1>
+
+<pre><code>from operator import attrgetter
+from collections import namedtuple
+
+class Ripper(object):
+    def __init__(self, **kwargs):
+        self.getter = attrgetter(*kwargs.values())
+        self.tup = namedtuple('tup', kwargs.keys())
+
+    def __call__(self, obj):
+        return self.tup._make(self.getter(obj))._asdict()
+</code></pre>
+
+<p>What just happened?</p>
+
+<p>To make it clearer, here's a step by step version of <strong>call</strong>:</p>
+
+<pre><code>def __call__(self, obj):
+    # Rip the attributes we want
+    attrs = self.getter(obj)
+    # Make a named tuple from them
+    t = self.tup._make(attrs)
+    # Turn it into a dict
+    return t._asdict()
+</code></pre>
+
+<p>So now we have a class where instances of it will turn your objects into a dict of data.</p>
+
+<pre><code>UserRipper = Ripper(id='id', name='name', dob='dob', avatar='profile.avatar.url')
+
+def user_detail(request):
+    return http.JsonResponse(UserRipper(request.user))
+</code></pre>
+
+<p>Note, however, that it doesn't deal with complex types like dates or objects.  You're limited to types the json module can encode.  Of course, you can [as Django does] provide your own sub-class of JSONEncoder to deal with these types.</p>
+
+<h1>Polish [edit]</h1>
+
+<p>As a final stage, to make life easier, we can let fields that aren't renamed be passed as positional arguments.</p>
+
+<pre><code>class Ripper(object):
+    def __init__(self, *args, **kwargs):
+        for arg in args:
+            kwargs.setdefault(arg, arg)
+        self.getter = attrgetter(*kwargs.values())
+        self.tup = namedtuple('tup', kwargs.keys())
+
+    def __call__(self, obj):
+        return self.tup._make(self.getter(obj))._asdict()
+</code></pre>
+
+<p>Now our example can be simplified to:</p>
+
+<pre><code>UserRipper = Ripper('id', 'name', 'dob', avatar='profile.avatar.url')
+</code></pre>
+
+<p>Much DRYer :)</p>
+</main>
+    <footer> Copyright &copy; 2019 Curtis Maloney </footer>
+  </body>
+</html>
