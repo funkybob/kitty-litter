@@ -3,40 +3,16 @@ from collections import Counter
 from operator import attrgetter
 from pathlib import Path
 
-from gilbert.content import Content, Templated
-from gilbert.query import Query
+import yaml
+
+from gilbert import Site
+from gilbert.plugins.collection import Collection
 from gilbert.utils import oneshot
 
 
-class Menu(Templated, Content):
-    template = 'menu.html'
-    sort_by = 'name'
-
-    filter_by : dict = {}
-
-    @oneshot
-    def pages(self):
-        sort_by = self.sort_by
-        reverse = sort_by.startswith('-')
-        if reverse:
-            sort_by = sort_by[1:]
-        key = attrgetter(sort_by)
-        return sorted(
-            self.site.pages.matching(self.filter_by),
-            key=key,
-            reverse=reverse,
-        )
-
-
-class TagIndex(Content):
+class TagIndex(Collection):
     exclude_tags : typing.Collection[str] = set()
     template = 'tag_index.html'
-
-    filter_by : dict = {}
-
-    @oneshot
-    def pages(self):
-        return self.site.pages.matching(self.filter_by)
 
     @oneshot
     def tag_counts(self):
@@ -59,3 +35,10 @@ class TagIndex(Content):
                 'pages': [page for page in self.pages if tag in page.tags]
             }):
                 target.write_text( template.render(ctx) )
+
+
+@Site.register_context_provider
+def global_context(ctx):
+    with open('global.yml') as fin:
+        ctx.update(yaml.load(fin), Loader=yaml.Loader)
+    return ctx
