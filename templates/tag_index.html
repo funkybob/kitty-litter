@@ -2,12 +2,15 @@
 
 {% block content %}
 
+{% include "cloud.html" tag_counts=site.pages["blog/tags.yml"].tag_counts %}
+
 <h1> Tag: {{ tag }}</h1>
 
 {% for page in pages %}
   <article>
     <header>
       <a href="/{{ page.get_output_name() }}">{{page.title}}</a>
+      <time datetime="{{ page.date }}">{{ page.date }}</time>
     </header>
   </article>
 {% endfor %}

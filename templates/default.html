@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>{{ this.title }}</title>
+    <title>{{ sitename }} - {% block title %}{{ this.title }}{% endblock %}</title>
     <link rel="icon" href="/favicon.png" size="32x32" type="image/png">
     <link rel="stylesheet" href="/style.css">
   </head>
   <body>
     <header>{{ this.title }}</header>
     <nav>
-        {{ site.content['menu/main.yml'].generate_content() }}
+        {% include "menu.html" pages=site.content['menu/main.yml'].pages %}
     </nav>
     <main>{% block content %}{{ this.content }}{% endblock %}</main>
     <footer> Copyright &copy; 2019 Curtis Maloney </footer>
