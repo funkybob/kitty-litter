@@ -1,6 +1,5 @@
 import typing
 from collections import Counter
-from operator import attrgetter
 from pathlib import Path
 
 import yaml
@@ -11,7 +10,7 @@ from gilbert.utils import oneshot
 
 
 class TagIndex(Collection):
-    exclude_tags : typing.Collection[str] = set()
+    exclude_tags: typing.Collection[str] = set()
     template = 'tag_index.html'
 
     @oneshot
@@ -26,19 +25,21 @@ class TagIndex(Collection):
         target_path.mkdir(parents=True, exist_ok=True)
 
         template = self.site.templates[self.template]
-        ctx = self.site.get_context(self)
 
         for tag in self.tag_counts:
             target = target_path / f'{tag}.html'
+            ctx = self.site.get_context(self)
             with ctx.push({
                 'tag': tag,
                 'pages': [page for page in self.pages if tag in page.tags]
             }):
-                target.write_text( template.render(ctx) )
+                target.write_text(template.render(ctx))
 
 
 @Site.register_context_provider
 def global_context(ctx):
+
     with open('global.yml') as fin:
         ctx.update(yaml.load(fin), Loader=yaml.Loader)
+
     return ctx
