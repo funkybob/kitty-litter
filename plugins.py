@@ -26,9 +26,9 @@ class TagIndex(Collection):
 
         template = self.site.templates[self.template]
 
+        ctx = self.site.get_context(self)
         for tag in self.tag_counts:
             target = target_path / f'{tag}.html'
-            ctx = self.site.get_context(self)
             with ctx.push({
                 'tag': tag,
                 'pages': [page for page in self.pages if tag in page.tags]
