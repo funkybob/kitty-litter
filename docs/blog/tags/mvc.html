@@ -1,64 +1,332 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
+<!--
+	Future Imperfect by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
 <html>
-  <head>
-    <title>Kitty Litter - Tags</title>
-    <link rel="icon" href="/favicon.png" size="32x32" type="image/png">
-    <link rel="stylesheet" href="/style.css">
-  </head>
-  <body>
-    <header>Tags</header>
-    <nav>
-        <ul>
+<head>
+	<title>Kitty Litter - </title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="/css/main.css" />
+</head>
+<body class="is-preload">
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Header -->
+		<header id="header">
+			<h1><a href="/index.html"> <img src="/images/logo.png"> Kitty Litter</a></h1>
+			<nav class="links">
+				<ul>
   <li><a href="/blog/index.html">Blog</a></li>
-  <li><a href="/index.html">Welcome</a></li>
 </ul>
 
-    </nav>
-    <main>
+			</nav>
+			<nav class="main">
+				<ul>
+					<!-- <li class="search">
+						<a class="fa-search" href="#search">Search</a>
+						<form id="search" method="get" action="#">
+							<input type="text" name="query" placeholder="Search" />
+						</form>
+					</li> -->
+					<li class="menu">
+						<a class="fa-bars" href="#menu">Menu</a>
+					</li>
+				</ul>
+			</nav>
+		</header>
 
-<ul class="tag-cloud">
+		<!-- Menu -->
+		<section id="menu">
+			<!-- Search -->
+			<!-- <section>
+				<form class="search" method="get" action="#">
+					<input type="text" name="query" placeholder="Search" />
+				</form>
+			</section> -->
 
-    <li><a href="/blog/tags/django.html">django <span>(12)</span></a></li>
+			<!-- Links -->
+			<section>
+				<ul class="links">
+			
+					<li>
+						<a href="/blog/index.html">
+							<h3>Blog</h3>
+							<p></p>
+						</a>
+					</li>
+			
+				</ul>
+			</section>
 
-    <li><a href="/blog/tags/python.html">python <span>(9)</span></a></li>
+			<!-- Actions -->
+			<!-- <section>
+				<ul class="actions stacked">
+					<li><a href="#" class="button large fit">Log In</a></li>
+				</ul>
+			</section> -->
+		</section>
 
-    <li><a href="/blog/tags/code.html">code <span>(4)</span></a></li>
+		<!-- Main -->
+		<div id="main">
+			
+<!-- Post -->
 
-    <li><a href="/blog/tags/javascript.html">javascript <span>(4)</span></a></li>
-
-    <li><a href="/blog/tags/forms.html">forms <span>(3)</span></a></li>
-
-    <li><a href="/blog/tags/csrf.html">csrf <span>(3)</span></a></li>
-
-    <li><a href="/blog/tags/enum.html">enum <span>(2)</span></a></li>
-
-    <li><a href="/blog/tags/decorators.html">decorators <span>(2)</span></a></li>
-
-    <li><a href="/blog/tags/compression.html">compression <span>(1)</span></a></li>
-
-    <li><a href="/blog/tags/registration.html">registration <span>(1)</span></a></li>
-
-    <li><a href="/blog/tags/pony.html">pony <span>(1)</span></a></li>
-
-    <li><a href="/blog/tags/mvc.html">mvc <span>(1)</span></a></li>
-
-    <li><a href="/blog/tags/postgres.html">postgres <span>(1)</span></a></li>
-
-</ul>
-
-
-<h1> Tag: mvc</h1>
-
-
-  <article>
+  <article class="post">
     <header>
-      <a href="/blog/no-your-web-framework-not-mvc.html">No, your web framework is not MVC</a>
-      <time datetime="2015-12-18">2015-12-18</time>
+      <div class="title">
+        <h2><a href="/blog/no-your-web-framework-not-mvc.html">No, your web framework is not MVC</a></h2>
+      </div>
+      <div class="meta">
+        <time class="published" datetime="2015-12-18">Fri, 18 Dec 2015</time>
+      </div>
     </header>
+    <a href="single.html" class="image featured"><img src="images/pic01.jpg" alt="" /></a>
+    <p><p>Whilst it is theoretically possible, I've yet to see a single server-side web framework that is MVC.</p>
+
+<p>"Oh, pshaw!", I hear you say, "But {framework of choice} says it is!  So it must be!"</p>
+
+<p>Yeah, and MySQL says it's a good DBMS...</p>
+
+<h2>What is MVC?</h2>
+
+<p>MVC - Model / View / Controller - is a design pattern for GUI applications to affect "separation of concerns".  This allows each part of the application to be loosely coupled, improving isolation, and enforcing adherence to interfaces.</p>
+
+<p>The Model provides interfaces to the state of the application and whatever data it accesses.</p>
+
+<p>The View subscribes to changes in the Model, and presents the information in a meaningful way to the "user".</p>
+
+<p>When the user interacts with the View, it sends actions to the Controller, which performs the work, and (in most cases) updates the application state by changing the Model.</p>
+
+<p>And around it goes.  Model changes state, View updates, etc.  Changes and updat</p>
+    <footer>
+      <ul class="actions">
+        <li><a href="/blog/no-your-web-framework-not-mvc.html" class="button large">Continue Reading</a></li>
+      </ul>
+    </footer>
   </article>
+  
 
 
-</main>
-    <footer> Copyright &copy; 2019 Curtis Maloney </footer>
-  </body>
+		</div>
+
+		<!-- Sidebar -->
+		<section id="sidebar">
+			<!-- Intro -->
+			<section id="intro">
+				<a href="/" class="logo"><img src="images/logo.jpg" alt="" /></a>
+				<header>
+					<h2>Tags</h2>
+					<!-- <p>Tags</p> -->
+				</header>
+			</section>
+			
+<!-- Links -->
+<section>
+  <header>
+    <h2>Tags</h2>
+  </header>
+  <ul class="posts">
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/django.html">
+            <h3>django</h3>
+            <p>12 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/python.html">
+            <h3>python</h3>
+            <p>9 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/code.html">
+            <h3>code</h3>
+            <p>4 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/javascript.html">
+            <h3>javascript</h3>
+            <p>4 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/forms.html">
+            <h3>forms</h3>
+            <p>3 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/csrf.html">
+            <h3>csrf</h3>
+            <p>3 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/enum.html">
+            <h3>enum</h3>
+            <p>2 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/decorators.html">
+            <h3>decorators</h3>
+            <p>2 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/compression.html">
+            <h3>compression</h3>
+            <p>1 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/registration.html">
+            <h3>registration</h3>
+            <p>1 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/pony.html">
+            <h3>pony</h3>
+            <p>1 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/mvc.html">
+            <h3>mvc</h3>
+            <p>1 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+    <li>
+      <article>
+        <header>
+          <a href="/blog/tags/postgres.html">
+            <h3>postgres</h3>
+            <p>1 posts.</p>
+          </a>
+        </header>
+      </article>
+    </li>
+
+  </ul>
+</section>
+
+
+			<!-- Posts List -->
+			<!-- <section>
+				<ul class="posts">
+					<li>
+						<article>
+							<header>
+								<h3><a href="single.html">Congue ullam corper lorem ipsum dolor</a></h3>
+								<time class="published" datetime="2015-10-06">October 7, 2015</time>
+							</header>
+							<a href="single.html" class="image"><img src="images/pic12.jpg" alt="" /></a>
+						</article>
+					</li>
+				</ul>
+			</section> -->
+
+			<!-- About -->
+			<section class="blurb">
+				<h2>About</h2>
+				<p>Hi!</p>
+				<p>I'm <strong>FunkyBob</strong>, also know as <small>Curtis Maloney</small>.</p>
+				<p>Contained herein are some things I thought important enough to write about.</p>
+				<!-- <ul class="actions">
+					<li><a href="#" class="button">Learn More</a></li>
+				</ul> -->
+			</section>
+
+			<!-- Footer -->
+			<section id="footer">
+				<ul class="icons">
+					<li><a href="https://twitter.com/BunkyFob" class="fa-twitter"><span class="label">Twitter</span></a></li>
+					<!-- <li><a href="#" class="fa-facebook"><span class="label">Facebook</span></a></li>
+					<li><a href="#" class="fa-instagram"><span class="label">Instagram</span></a></li>
+					<li><a href="#" class="fa-rss"><span class="label">RSS</span></a></li>
+					<li><a href="#" class="fa-envelope"><span class="label">Email</span></a></li> -->
+				</ul>
+				<p class="copyright">&copy; Untitled. Design: <a href="http://html5up.net">HTML5 UP</a>. Images: <a href="http://unsplash.com">Unsplash</a>.</p>
+			</section>
+
+		</section>
+
+	</div>
+
+	<!-- Scripts -->
+	<script src="/js/jquery.min.js"></script>
+	<script src="/js/browser.min.js"></script>
+	<script src="/js/breakpoints.min.js"></script>
+	<script src="/js/util.js"></script>
+	<script src="/js/main.js"></script>
+
+</body>
 </html>
