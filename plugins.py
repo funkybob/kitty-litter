@@ -36,10 +36,19 @@ class TagIndex(Collection):
                 target.write_text(template.render(ctx))
 
 
+import html5lib
+
+def truncate(html, length):
+    stream = html5lib.parse(html[:length])
+    return html5lib.serializer.serialize(stream)
+
+
 @Site.register_context_provider
 def global_context(ctx):
 
     with open('global.yml') as fin:
-        ctx.update(yaml.load(fin), Loader=yaml.Loader)
+        ctx.update(yaml.load(fin, Loader=yaml.Loader))
+
+    ctx['shorten'] = truncate
 
     return ctx
