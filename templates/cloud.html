@@ -1,5 +1,0 @@
-<ul class="tag-cloud">
-{% for tag in tag_counts.most_common() %}
-    <li><a href="/blog/tags/{{ tag[0] }}.html">{{ tag[0] }} <span>({{ tag[1] }})</span></a></li>
-{% endfor %}
-</ul>

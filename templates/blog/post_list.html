@@ -1,0 +1,12 @@
+<article>
+  <header>
+    <h2><a href="{{ post.url }}">{{ post.title }}</a></h2>
+    <div>
+      <time class="published" datetime="{{ post.date }}">{{ post.date.strftime("%a, %d %b %Y") }}</time>
+    </div>
+  </header>
+  <p>{{ shorten(post.content, 600) }}</p>
+  <footer>
+    <a href="{{ post.url }}">Continue Reading</a>
+  </footer>
+</article>

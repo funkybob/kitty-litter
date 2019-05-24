@@ -40,17 +40,17 @@ Firstly, unsurprisingly, it's very fast. It compressed the `enwik8` reference fi
 
 The compression ratio is, in fact, not too bad, given the simplicity of the algorithm.
 
-size      | filename
---------: | ------------
- 42265732 | enwik8.gz
- 57281515 | enwik8.p4_20
- 57285984 | enwik8.lz4
- 61657971 | enwik8.p4_16
- 61719932 | enwik8.p3_20
- 66232007 | enwik8.p3_16
- 67714233 | enwik8.p4_13
- 71055303 | enwik8.p3_13
-100000000 | enwik8.txt
+size        | filename
+----------: | ------------
+ 42,265,732 | enwik8.gz
+ 57,281,515 | enwik8.p4_20
+ 57,285,984 | enwik8.lz4
+ 61,657,971 | enwik8.p4_16
+ 61,719,932 | enwik8.p3_20
+ 66,232,007 | enwik8.p3_16
+ 67,714,233 | enwik8.p4_13
+ 71,055,303 | enwik8.p3_13
+100,000,000 | enwik8.txt
 
 What you see here are the "gzip -1" of the file, the "lz4 -1" of the file, and various combinations of 3 or 4 bit hash, and 13, 16, or 20bit state size [and thus table size].
 

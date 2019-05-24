@@ -41,9 +41,9 @@ The two most significant things to notice here:
 
 1. the use of all() instead of ```user_form.is_valid() and profile_form.is_valid()```
 
-    This is because Python will "shortcut" the if clause if the first form is not valid, and so not run validation on the second form.
+    This is because when using `and` Python will "shortcut" the if clause if the first `form` is not valid, and so not run validation on the second `form`.
 
-     May not sound like much, but imagine how tedious it will be for your user when, after they finally get all the fields for the first form right, a whole new slew of errors who up?
+    May not sound like much, but imagine how tedious it will be for your user when, after they finally get all the fields for the first form right, a whole new slew of errors who up?
 
 2. Two forms in the context.
 
