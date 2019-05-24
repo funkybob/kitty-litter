@@ -24,8 +24,6 @@
 			<h1> {{ this.title }} {% block subtitle %}{% endblock %} </h1>
 		</header>
 
-		{% block sidebar %}{% endblock %}
-
 		<section>
 			<header>
 				<h2> About </h2>
@@ -34,6 +32,9 @@
 			<p>I'm <strong>FunkyBob</strong>, also know as <small>Curtis Maloney</small>.</p>
 			<p>Contained herein are some things I thought important enough to write about.</p>
 		</section>
+
+		{% block sidebar %}{% endblock %}
+
 	</aside>
 
 	<main>
