@@ -1,4 +1,4 @@
-$borderColour: rgb(160, 160, 160, 0.3);
+$borderColour: rgba(160, 160, 160, 0.3);
 
 html { box-sizing: border-box; } 
 *, *:before, *:after { box-sizing: inherit; }
@@ -19,6 +19,11 @@ a {
   &:hover {
     border-bottom: solid $borderColour 1px;
   }
+}
+
+a[href^="https://"]:before,
+a[href^="http://"]:before {
+  content: '\1f517';
 }
 
 
