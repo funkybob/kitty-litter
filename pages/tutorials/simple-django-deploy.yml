@@ -1,0 +1,463 @@
+title: Simple Django Deploy
+content_type: MarkdownPage
+tags:
+  - in-menu
+---
+The following is a simplified version of my Django Deployment guide, reduced for
+just running a single site.
+
+So, here is a guide to setting up a brand new [DigitalOcean](https://www.digitalocean.com/?refcode=214aac02886d)
+droplet, ready to host a single Django site.
+
+(If you sign up with the link above, DigitalOcean will give you and me some
+credit for my referral. More details [here](https://www.digitalocean.com/referral-program/)
+:)
+
+## The overview
+
+I'll be using Debian, as it's generally current, doesn't bloat your basic
+install too much, and has a good track record on servers.
+
+A basic Django site requires 4 main components:  Web server, App server, DBMS (database), and MTA (mail server).
+
+<dl>
+  <dt> Web Server </dt>
+  <dd>
+    Nginx will act as our web server, accepting HTTP requests, serving static
+    assets and media content, and forwarding other requests to our App server.
+  </dd>
+
+  <dt> App Server </dt>
+  <dd> We're going to use uWSGI. Whilst there are simpler solutions like
+  `gunicorn`, uWSGI brings with it a plethora features that are hard to ignore.
+  </dd>
+
+  <dt> Database Management Server (DBMS) </dt>
+  <dd> Postgres.  It's really the best choice. </dd>
+
+  <dt> SMTP </dt>
+  <dd>
+    We need this so our servers can email us when there are errors, and so our
+    sites can email their users. OpenSMTPd has the laudable goal of being
+    simple and secure - covering the common, basic uses, instead of getting
+    complicated, because complex means hard to secure.
+  </dd>
+
+</dl>
+
+We'll be keeping the web sites in `/srv/www/` with the following layout:
+
+    venv/ - the virtualenv
+    html/ - static and media
+    logs/
+    code/ - where our project's code lives
+
+## Before we begin.
+
+In this guide I'll assume some basic familiarity with using Linux and its ilk.
+
+I will also try to abide by basic good security practices. This means we use
+`root` as little as possible.
+
+One thing that turns up often is people are learning somewhere that "if it
+doesn't work, sudo!". **DON'T DO THIS**. Using `sudo` is something you should
+only do when you _know_ you absolutely must.
+[Note: out of the box Debian does not include sudo. And I never install it. Think about this.]
+
+As a convention in this document, any commands prefixed with `#` are expected to
+be run as root, and those with `$` as a normal user.
+
+Lastly, text editors. It's a personal choice. My preference is vi, but many find
+this (understandably) arcane. In a default install of Debian, you will typically
+have a choice between vi, nano, pico, and possibly more. Use what you feel most
+confident with.
+
+## Setting up a Droplet
+
+Make sure when registering with DO
+[to create a SSH key](https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys--2)
+to use with them, and upload your public key to them. This can then be your
+default way to log in as root.
+
+Once you've registered with DO, go to 'Create Droplet'.
+
+Any name will do - I'll use "testing" for this case.
+
+The basic $5 droplet may not seem like much, but I've managed to host 7 or 8
+small Django sites concurrently on one.
+
+Pick any region you like - one close to you may reduce latency, but not
+noticeably. You may want to consider legal jurisdiction of your data, also.
+
+Select Debian, and go with the latest - 9.1 as of this writing.
+
+For "Available Settings", you can leave them off for now, but when you get
+serious, _do_ enable Backups.
+
+Be sure to select your SSH key for installation [the box will colour in].
+
+Now, press the big "Create Droplet" button, and about a minute later you'll have
+your server!
+
+## Preparation
+
+Before we set up our services, we need to do some routine house keeping.
+
+Log into your new droplet
+
+    $ ssh root@{your-droplets-ip}
+
+First, we update the package data (remember, `#` means do this as root):
+
+    # apt-get update
+    # apt-get autoclean
+
+The first rule of securing a server is to not run network services you don't
+need - minimal attack surface. So we're going to remove `rpcbind`, as we don't
+use NFS.
+
+    # apt-get purge rpcbind
+
+Now we update all our installed packages.
+
+    # apt-get dist-upgrade
+
+Next, some packages we'll need:
+
+    # apt-get install python3 python3-dev zlib1g-dev libjpeg-dev libtiff-dev fail2ban git htop
+
+Some of this is obvious [python3]. We need `python3-dev` for building Python
+packages that require compilation, such as PIL and psycopg2.
+
+PIL also requires the image libraries libjpeg and libtiff, and uses zlib for
+PNG.
+
+We use fail2ban to avoid filling our logs with the ever persistent botnet failed
+logins.
+
+We'll need access to our git repo with our code in it, which explains git.
+
+And finally, I like to use `htop` to monitor my system - it's like top, only a
+lot better.
+
+After that, we clean up any packages that are installed but no longer needed.
+
+    # apt-get autoremove
+
+Finally, reboot to make sure the latest everything is running.
+
+    # reboot
+
+### Final step
+
+Before we move on, we're going to create a non-root user to do our daily work
+as. Just like not running services we don't need, we don't use root unless we
+_absolutely_ _must_.
+
+This helps to prevent mistakes; we all make mistakes.
+
+    # useradd -G www-data,sudo -m {username}
+    # passwd {username}
+
+This creates a `username` user, in the www-data group so we can edit sites, the
+sudo group so we can use sudo, and then we set the password.
+
+In a new window, try logging in to make sure this worked.
+
+## Configuration
+
+### Configuring OpenSMTPd
+
+We want to configure to _only_ accept mail from local connections, since we have
+no need to receive emails, and don't want to be a relay for spam.
+
+    # apt-get install opensmtpd
+
+The default config will only accept connections on localhost, so is good enough.
+
+### Configuring Postgres
+
+Installing Postgres is simple, and the default configuration is fine.
+
+    # apt-get install postgresql-9.6
+
+We'll need to create a user for our apps to connect as. In a more complex
+install, with multiple apps, we would create a separate user per app, for better
+isolation. However, for now we'll just create a "www-data" role, to match the
+www-data user our web sites run as.
+
+    # su - postgres -c "createuser www-data -P"
+
+This will create a role for our `www-data` user, and prompt you for a password
+for it.
+
+Next, we create a role for our selves that is allowed to create databases, and
+is added to the `www-data` role so it can create them owned by that role.
+
+    # su - postgres -c "createuser -g www-data -d {username}"
+
+We could allow `www-data` to create databases, but it's safer to not. This
+follows the principle of least privilege.
+
+Since we're on a small memory budget, you may want to tweak some of the Postgres
+settings.
+
+You can edit them in the file `/etc/postgresql/9.6/main/postgresql.conf`.
+
+Here are some settings you can tune for memory use:
+
+ - shared_buffers
+ - temp_buffers
+ - work_mem
+ - max_connections
+ - maintenance_work_mem
+ - max_stack_size
+
+See [here](http://www.postgresql.org/docs/9.6/static/runtime-config-resource.html) for more details.
+
+Once you've adjusted these, restart postgres:
+
+    # systemctl restart postgresql
+
+### Configuring nginx
+
+Debian provides 3 different builds of nginx, with different options compiled in.
+The smallest we can use is nginx-full [the default], since we'll be wanting
+uWSGI and the "gzip static" module.
+
+    # apt-get install nginx-full
+
+Now want to put the following in a new file called
+`/etc/nginx/sites-available/mysite`
+
+    # Allow gzip compression
+    gzip_types text/css application/json application/x-javascript;
+    gzip_comp_level 6;
+    gzip_proxied any;
+    # Look for files with .gz to serve pre-compressed data
+    gzip_static on;
+
+    server {
+        listen 80;
+
+        # The hostnamename of my site
+        server_name *.mysite.com;
+
+        # Where to look for content (static and media)
+        root    /srv/www/html/;
+
+        # nginx docs recommend try_files over "if"
+        location    /   {
+            # Try to serve existing files first
+            try_files $uri @proxy =404;
+        }
+        location @proxy {
+            # Pass other requests to uWSGI
+            uwsgi_pass unix://srv/www/server.sock;
+            include uwsgi_params;
+        }
+    }
+
+We then remove the default site config, and symlink in our own
+
+    # cd /etc/nginx/sites-enabled
+    # rm default
+    # ln -s ../sites-available/mysite .
+
+Now restart nginx to take on the new config
+
+    # systemctl restart nginx
+
+
+### Preparing the deployment space
+
+We need to make space for our apps to live, and the links for their hostnames.
+
+    # cd /srv
+    # mkdir www
+    # chown www-data:www-data www
+    # chmod g+w www
+
+## Creating a site
+
+From here on, use your normal user account for all actions.
+
+    $ cd /srv/www
+
+Make all the directories we need:
+
+    $ mkdir -p code html/static html/media logs
+    $ chgrp -R www-data logs html
+    $ chmod -R g+w logs html
+
+Create a virtualenv, and activate it, and update pip:
+
+    $ python3 -m venv venv
+
+Then:
+
+    $ . venv/bin/activate
+    $ pip install -U --force pip
+
+The `--force` is here because some editions of Debian ship a custom version of
+`pip` and it won't update. We want to ensure you get a current, stock, release
+version of pip.
+
+Check out your project into code/
+
+    $ git clone {github url} code/
+
+This assumes your project is the top level of your git repo (i.e. where
+manage.py is). If this is not the case, check it out into another directory, and
+symlink the root of the project (where manage.py lives) to code/
+
+    $ rmdir code
+    $ ln -s myrepo/myproject code
+
+Install your requirements
+
+    $ pip install -r code/requirements.txt
+
+Create a database:
+
+    $ createdb -O www-data mysite
+
+Migrate your DB schema:
+
+    $ cd code
+    $ python manage.py migrate
+
+And create a superuser for you to log in with:
+
+    $ python manage.py createsuperuser
+
+Your project should be configured with
+
+    STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'html', 'static')
+    MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'html', 'media')
+
+so that when you run:
+
+    $ python manage.py collectstatic --noinput
+
+it will collect into `/srv/www/html/static/`
+
+This assumes you have `STATIC_URL = '/static/'` and `MEDIA_URL = '/media/'`.
+This way nginx will find `/static/*` when it looks in `/srv/www/html/`.
+
+You also need to make sure your DATABASES is configured correctly. Ensure you
+have `psycopg2-binary` in your requirements.txt, and set your DATABASES to
+something like:
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'mysite',
+            'USER': 'www-data',
+            'PASSWORD': 'thepasswordyouset',
+            'HOST': 'localhost',
+        }
+    }
+
+Next, we'll pre-compress our CSS and JS. This saves the CPU and memory of
+compressing it on demand, and allows us to devote more time _now_ to compressing
+it more.
+
+    $ cd /srv/www/html/
+    $ find . -name "*.js" -exec gzip -9k {} ";"
+    $ find . -name "*.css" -exec gzip -9k {} ";"
+
+Don't forget to change your settings to `DEBUG = False`. When you do this, you
+will also need to set `ALLOWED_HOSTS`. Since nginx is validating the hostname
+for us, we can safely set it as:
+
+    ALLOWED_HOSTS = ['*']
+
+### Configuring uWSGI
+
+Bring in the parts of uWSGI that we need:
+
+    # apt-get install uwsgi-plugin-python3 uwsgi
+
+Now let's add our uWSGI config.  Into `/etc/uwsgi/apps-available/mysite.ini` put:
+
+    [uwsgi]
+    procname-master = MySite
+
+    chdir = /srv/www/code/
+
+    socket = /srv/www/server.sock
+    # Task management
+    ; Max 4 processes
+    processes = 4
+    ; Each running 4 threads
+    threads = 4
+    ; Reduce to 1 process when quiet
+    cheaper = 1
+    ; Save some memory per thread
+    thread-stack-size = 512
+
+    # Logging
+    plugin = logfile
+    ; Log request details here
+    req-logger = file:logs/request.log
+    ; Log other details here
+    logger = file:logs/error.log
+    log-x-forwarded-for = true
+
+    # Python app
+    plugin = python
+    ; Activate this virtualenv
+    virtualenv = venv/
+    ; Add this dir to PYTHONPATH so Python can find our code
+    pythonpath = code/
+    ; The WSGI module to load
+    module = mysite.wsgi
+
+    # Don't load the app in the Master - saves memory in quiet times
+    lazy-apps = true
+
+And just like with nginx, we need to symlink it into apps-enabled:
+
+    # cd /etc/uwsgi/apps-enabled
+    # ln -s ../apps-available/mysite.ini .
+
+And we can start it up using:
+
+    # systemctl restart uwsgi
+
+If this works without issue, we can enable it to start on boot:
+
+    # systemctl enable uwsgi
+
+## Congratulations!
+
+Your site is live!
+
+
+# How does it work?
+
+So, let's consider different cases and how each part reacts.
+
+1. A request for static/media
+
+    First, the client connects and asks for "/static/js/jquery.js".
+
+    Nginx will get this, and the `try_files` directive tells it to look in the root, which is `/srv/www/html/`.  It finds `/srv/www/html/static/js/jquery.js` and returns it.
+
+2. A request for dynamic content.
+
+    The browser requests "/accounts/login/".
+
+    Nginx looks, but does not find `/srv/www/html/accounts/login/`, so it passes the request to uWSGI.
+
+    uWSGI then handles the request through Django, and returns the response.
+
+3. Anything else
+
+    All other requests will get a 404.
+
+# And ninthly...
+
+If you have any more questions, feedback, etc, about this guide, please seek me
+out in #django on irc.freenode.net ...
