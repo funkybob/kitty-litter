@@ -21,7 +21,9 @@ A lot of the following is copied verbatim from the previous article, but I will
 update the docs links (from Django 1.7 to 2.1) and clarify where it's been
 found valuable.
 
-It's important to note that you should do all of this right at the very _start_ of your project, as advised [here](https://docs.djangoproject.com/en/2.1/topics/auth/customizing/#using-a-custom-user-model-when-starting-a-project)
+It's important to note that you should do all of this right at the very _start_
+of your project, as advised
+[here](https://docs.djangoproject.com/en/2.1/topics/auth/customizing/#using-a-custom-user-model-when-starting-a-project)
 
 ## Step 1: User model
 
@@ -54,9 +56,9 @@ and `PermissionsMixin`.
 Add to this whatever other fields you record against all your users - name,
 avatar image, what have you.
 
-Why `AbstractBaseUser`, and not `AbstractUser`?  Because `AbstractUser` implements the
-default Django user model, and we don't want that.  Notably, it includes
-'username' as unique, and 'email' as not.
+Why `AbstractBaseUser`, and not `AbstractUser`?  Because `AbstractUser`
+implements the default Django user model, and we don't want that.  Notably, it
+includes 'username' as unique, and 'email' as not.
 
 `PermissionsMixin` gives us `is_superuser`, `groups` and `user_permissions`, as
 well as the right methods to participate in the normal permissions machinery.
@@ -111,10 +113,12 @@ Finally, set `AUTH_USER_MODEL` in your `settings.py`
 This is where the clever part comes.
 
 Instead of creating all our own code to manage sending the email and verifying
-the token, we can re-use the [existing password reset machinery](https://docs.djangoproject.com/en/2.1/topics/auth/default/#django.contrib.auth.views.PasswordResetView)
+the token, we can re-use the [existing password reset
+machinery](https://docs.djangoproject.com/en/2.1/topics/auth/default/#django.contrib.auth.views.PasswordResetView)
 that's built into Django!
 
-Let's face it, what's the difference between a verification email for registration, and one for password reset?
+Let's face it, what's the difference between a verification email for
+registration, and one for password reset?
 
 We just need to hook in the existing views, and tweak them to use different
 templates.
@@ -131,13 +135,19 @@ We will need to create a form, so in `accounts/forms.py` add:
             model = models.User
             fields = ['email']
 
-Notice we don't put the password here. Later when the users passes through the `PasswordResetConfirmView` their new password will be set.
+Notice we don't put the password here. Later when the users passes through the
+`PasswordResetConfirmView` their new password will be set.
 
-Next we create a sub-class of the default `PasswordResetForm`. In `PasswordResetView`, it's actually the form class that contains all the code to send the emails.
+Next we create a sub-class of the default `PasswordResetForm`. In
+`PasswordResetView`, it's actually the form class that contains all the code to
+send the emails.
 
-This form has a `get_user` method which will query for Users with matching emails, as well as `is_active` being True, and will then filter for those having a "usable" password.
+This form has a `get_user` method which will query for Users with matching
+emails, as well as `is_active` being True, and will then filter for those
+having a "usable" password.
 
-We need to change how it finds the list of users to send emails, since we already have the User:
+We need to change how it finds the list of users to send emails, since we
+already have the User:
 
     from django.contrib.auth.forms import PasswordResetForm
 
@@ -164,7 +174,7 @@ Now, we add our registration view to `accounts/views.py`:
         email_template_name = 'register/registration_email.txt'
         # html_email_template_name = Set
         subject_template_name = 'register/registration_subject.txt'
-        success_url = reverse_lazy('register-done')
+        success_url = reverse_lazy('accounts:register-done')
 
         def form_valid(self, form):
             self.object = form.save(commit=False)
@@ -176,20 +186,22 @@ Now, we add our registration view to `accounts/views.py`:
             form.is_valid()  # Must trigger validation
             return super().form_valid(form)
 
-So here we're taking the existing `PasswordResetView`, and overriding a bunch of
-attributes, as well as extending the `form_valid` method to save our User, then
-replace the form with our custom sub-class of `PasswordResetForm`.
+So here we're taking the existing `PasswordResetView`, and overriding a bunch
+of attributes, as well as extending the `form_valid` method to save our User,
+then replace the form with our custom sub-class of `PasswordResetForm`.
 
-As a precaution, we set an unusable password on the user. This guarantees they can't log in, and must complete the email verification to set as password.
+As a precaution, we set an unusable password on the user. This guarantees they
+can't log in, and must complete the email verification to set as password.
 
-Lastly we, create our `accounts/urls.py`. Instead of sub-classing all of the other views, we can override their config attributes when calling `as_view()`:
+Lastly we, create our `accounts/urls.py`. Instead of sub-classing all of the
+other views, we can override their config attributes when calling `as_view()`:
 
     from django.contrib.auth import views as auth
     from django.urls import path, reverse_lazy
 
     from . import views
 
-
+    app_label = 'accounts'
     urlpatterns = [
         path('register/',
             views.UserRegistrationView.as_view(),
@@ -236,7 +248,7 @@ Finally, hook these URLs into your root urls.py
 
 Remember to write the following templates:
 
-- register/register.html : Presents the registration form, including the `email` field.
+- register/register_form.html : Presents the registration form, including the `email` field.
 - register/registration_email.txt : Body of the verification email
 - register/registration_subject.txt : Subject-line of the verification email
 
@@ -256,3 +268,4 @@ See [here](https://docs.djangoproject.com/en/2.1/topics/auth/default/#django.con
 ## Credit
 
 Thanks xrogaan for all your feedback!
+Thanks to pjs for trying it out and giving more feedback!
