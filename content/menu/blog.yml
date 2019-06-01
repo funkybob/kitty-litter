@@ -4,9 +4,6 @@ filter_by:
   all:
     - eq:
       - attr: ["content_type"]
-      - "MarkdownPage"
-    - startswith:
-      - attr: ["name"]
-      - "blog/"
+      - "BlogPost"
     - attr: ['date']
 ---

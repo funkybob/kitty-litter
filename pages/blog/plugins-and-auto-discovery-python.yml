@@ -1,7 +1,6 @@
 title: Plugins and auto-discovery in Python
 date: 2019-03-20
-# template: blog/post.html
-content_type: MarkdownPage
+content_type: BlogPost
 tags:
  - python
 ---

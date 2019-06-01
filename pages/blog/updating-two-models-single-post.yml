@@ -1,5 +1,5 @@
 title: Updating two models in a single post
-content_type: MarkdownPage
+content_type: BlogPost
 date: 2015-06-10
 tags:
   - django

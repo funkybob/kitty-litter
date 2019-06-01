@@ -6,7 +6,12 @@ import yaml
 
 from gilbert import Site
 from gilbert.plugins.collection import Collection
+from gilbert.plugins.markdown import MarkdownPage
 from gilbert.utils import oneshot
+
+
+class BlogPost(MarkdownPage):
+    template = "blog/post_detail.html"
 
 
 class TagIndex(Collection):
@@ -26,8 +31,8 @@ class TagIndex(Collection):
 
         template = self.site.templates[self.template]
 
+        ctx = self.site.get_context(self)
         for tag in self.tag_counts:
-            ctx = self.site.get_context(self)
             target = target_path / f'{tag}.html'
             with ctx.push({
                 'tag': tag,
