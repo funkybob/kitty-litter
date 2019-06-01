@@ -3,22 +3,24 @@ content_type: MarkdownPage
 tags:
   - in-menu
 ---
-The following is a simplified version of my Django Deployment guide, reduced for
-just running a single site.
+The following is a simplified version of my Django Deployment guide, reduced
+for just running a single site.
 
-So, here is a guide to setting up a brand new [DigitalOcean](https://www.digitalocean.com/?refcode=214aac02886d)
-droplet, ready to host a single Django site.
+So, here is a guide to setting up a brand new
+[DigitalOcean](https://www.digitalocean.com/?refcode=214aac02886d) droplet,
+ready to host a single Django site.
 
 (If you sign up with the link above, DigitalOcean will give you and me some
-credit for my referral. More details [here](https://www.digitalocean.com/referral-program/)
-:)
+credit for my referral. More details
+[here](https://www.digitalocean.com/referral-program/) :)
 
 ## The overview
 
 I'll be using Debian, as it's generally current, doesn't bloat your basic
 install too much, and has a good track record on servers.
 
-A basic Django site requires 4 main components:  Web server, App server, DBMS (database), and MTA (mail server).
+A basic Django site requires 4 main components:  Web server, App server, DBMS
+(database), and MTA (mail server).
 
 <dl>
   <dt> Web Server </dt>
@@ -62,20 +64,22 @@ I will also try to abide by basic good security practices. This means we use
 One thing that turns up often is people are learning somewhere that "if it
 doesn't work, sudo!". **DON'T DO THIS**. Using `sudo` is something you should
 only do when you _know_ you absolutely must.
-[Note: out of the box Debian does not include sudo. And I never install it. Think about this.]
 
-As a convention in this document, any commands prefixed with `#` are expected to
-be run as root, and those with `$` as a normal user.
+[Note: out of the box Debian does not include sudo. And I never install it.
+Think about this.]
 
-Lastly, text editors. It's a personal choice. My preference is vi, but many find
-this (understandably) arcane. In a default install of Debian, you will typically
-have a choice between vi, nano, pico, and possibly more. Use what you feel most
-confident with.
+As a convention in this document, any commands prefixed with `#` are expected
+to be run as root, and those with `$` as a normal user.
+
+Lastly, text editors. It's a personal choice. My preference is vi, but many
+find this (understandably) arcane. In a default install of Debian, you will
+typically have a choice between vi, nano, pico, and possibly more. Use what you
+feel most confident with.
 
 ## Setting up a Droplet
 
-Make sure when registering with DO
-[to create a SSH key](https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys--2)
+Make sure when registering with DO [to create a SSH
+key](https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys--2)
 to use with them, and upload your public key to them. This can then be your
 default way to log in as root.
 
@@ -96,8 +100,8 @@ serious, _do_ enable Backups.
 
 Be sure to select your SSH key for installation [the box will colour in].
 
-Now, press the big "Create Droplet" button, and about a minute later you'll have
-your server!
+Now, press the big "Create Droplet" button, and about a minute later you'll
+have your server!
 
 ## Preparation
 
