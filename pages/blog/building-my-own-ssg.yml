@@ -1,0 +1,158 @@
+title: Building my own Static Site Generator
+date: 2019-06-01
+content_type: MarkdownPage
+tags:
+  - python
+---
+
+Anyone who's been following my blog may have noticed it recently moved home,
+and got a complete redesign.
+
+This all happened because of my decisions to dogfood my own static site
+generator.
+
+# A what, now?
+
+In case you've been out of the loop, a static site generator is a program which
+allows you to have a CMS, without running a CMS.
+
+You write all your content, keep it stashed safely in a source control, and
+then run a program that converts it all to static HTML pages.
+
+It's really the natural progression from heavily caching dynamically generated
+sites.
+
+When all your content are static, why put in the work to render it each time?
+
+# Why your own?
+
+OK, so besides the fact I an a chronic wheel reinventer... no, actually, that
+was it.
+
+I'd seen these tools around, and tried to imagine what I thought one would need
+to provide to be useful.
+
+My first attempt, [graaf](https://github.com/funkybob/graaf), was functional,
+but revealed I didn't understand the problem space all that well.
+
+It had no way to build navigation, for instance. Every page was rendered in
+isolation.
+
+# Take 2
+
+After a friend discussed an idea for a service based on SSGs, I decided to take
+another pass at the problem.
+
+This time:
+
+1. Pages and Content would be kept separate.
+
+  Sometimes you have content in your site that is shared amongst other parts of
+the site, and not rendered directly as a page on its own.  Navigation is an
+obvious example here.
+
+2. Object types and file types are separate.
+
+  Just because you read a `.yml` file, doesn't mean all YAML files should be
+rendered the same way.
+
+3. Plugins
+
+  Besides the absolute minimum, all file loaders, content types, and else will
+be supplied by plugins.
+
+# The result?
+
+Introducing [gilbert](https://github.com/funkybob/gilbert) !
+
+It uses my own [stencil](https://github.com/funkybob/stencil) template engine -
+and in using this, has prompted some significant improvements to the stencil
+template syntax!
+
+A site has `pages/`, `content`, `templates/`, and produces `docs/`.
+
+It can have a `config.yml`, which currently can provide defaults for
+`ContentTypes`. Nothing else uses it _yet_. This was the cleanest way I could
+see to solve problems like providing search paths for SCSS.
+
+Any packages in the `gilbert.plugins` namespace are imported, allowing them to:
+
+1. define subclasses of `gilbert.content.Content`, automatically registered as
+new content `ContentTypes`.
+2. register new file loaders on the `gilbert.Site`
+class.
+3. register a `context provider` for adding globally accessible data to
+the template context.
+
+Your site can also have a `plugins.py` which will be loaded after all the other
+plugins.
+
+By default plugins are provided for:
+
+- YAML loader
+- MarkdownPage content type
+- SCSS loader and content type
+- a Collection content type for defining filtered collections of content
+  objects.
+
+# Content objects
+
+At its core, a Site is composed of `Content` objects. These extend a validated
+schema class created for the project. It uses python3 type annotations to allow
+you to declare attributes and their acceptable types, which will be validated
+on instantiation.
+
+    from datetime import datetime
+    from gilbert.content import Content
+
+    class MyContent(Content):
+        name : str
+        when : datetime
+
+Now when a loaded files specifies it's a "MyContent" type, it MUST contain a
+`name` attribute which is a `str`, and a `when` that is a `datetime`. If not,
+an error will be raised, and rendering will stop.
+
+This extends to python `typing` types.  You can declare Container, Mapping,
+Union, and their variants.
+
+Other constructs, such as Option, Any, or AnyStr are not yet supported, but
+should be easy to add.
+
+# Containers and Queries
+
+On the `Site` object, there are two "containers", which hold the `pages`, and
+`content`.
+
+Each of these provide a query interface called `.matches()`, allowing you to
+select content using a basic query language.
+
+For instance, on this site I use a sub-class of Collection to build a list of
+blog posts.
+
+    all:
+      - eq:
+        - attr: ["content_type"]
+        - "MarkdownPage"
+      - startswith:
+        - attr: ["name"]
+        - "blog/"
+      - attr: ['date']
+
+This declares a top-level `all()` across 3 terms.
+
+The first says the `content_type` attribute must equal "MarkdownPage".
+
+The second says the `name` (original filename) must start with `blog/`.
+
+And finally, it must have a `date` attribute.
+
+# Futue Plans
+
+Right now I'm not happy with the render speed, though a lot of that is actually
+the load speed, since MarkdownPage renders the markdown on load.
+
+I would like to make the Content interface cleaner for separating intial
+content from rendered content, so it's easier to wrap in a one-shot property.
+
+But most of all, I need other people to use it and tell me what's missing!
