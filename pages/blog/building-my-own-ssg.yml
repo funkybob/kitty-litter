@@ -47,19 +47,19 @@ This time:
 
 1. Pages and Content would be kept separate.
 
-  Sometimes you have content in your site that is shared amongst other parts of
-the site, and not rendered directly as a page on its own.  Navigation is an
-obvious example here.
+    Sometimes you have content in your site that is shared amongst other parts
+    of the site, and not rendered directly as a page on its own.  Navigation is
+    an obvious example here.
 
 2. Object types and file types are separate.
 
-  Just because you read a `.yml` file, doesn't mean all YAML files should be
-rendered the same way.
+    Just because you read a `.yml` file, doesn't mean all YAML files should be
+    rendered the same way.
 
 3. Plugins
 
-  Besides the absolute minimum, all file loaders, content types, and else will
-be supplied by plugins.
+    Besides the absolute minimum, all file loaders, content types, and else
+    will be supplied by plugins.
 
 # The result?
 
