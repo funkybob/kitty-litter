@@ -89,6 +89,7 @@ body {
     > header {
       background-color: white;
       border: solid $borderColour 1px;
+      border-radius: 0.5em;
       padding: 0 1em;
 
       h1 {
@@ -149,6 +150,7 @@ nav {
 
 section, article {
   border: solid $borderColour 1px;
+  border-radius: 0.5em;
   background-color: white;
   padding: 1em;
 }
