@@ -39,7 +39,7 @@
 
 	<main>
 {% block content %}
-		<section> {{ this.content }} </section>
+		<section> {{ safe(this.content) }} </section>
 {% endblock %}
 	</main>
 

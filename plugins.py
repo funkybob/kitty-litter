@@ -4,6 +4,8 @@ from pathlib import Path
 
 import yaml
 
+from stencil import SafeStr
+
 from gilbert import Site
 from gilbert.plugins.collection import Collection
 from gilbert.plugins.markdown import MarkdownPage
@@ -45,7 +47,7 @@ import html5lib
 
 def truncate(html, length):
     stream = html5lib.parse(html[:length])
-    return html5lib.serializer.serialize(stream)
+    return SafeStr(html5lib.serializer.serialize(stream))
 
 
 @Site.register_context_provider
@@ -55,5 +57,6 @@ def global_context(ctx):
         ctx.update(yaml.load(fin, Loader=yaml.Loader))
 
     ctx['shorten'] = truncate
+    ctx['safe'] = SafeStr
 
     return ctx
