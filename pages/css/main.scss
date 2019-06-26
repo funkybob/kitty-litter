@@ -40,6 +40,8 @@ body {
     "header header"
     "sidebar main";
 
+  overflow-x: hidden; /* don't spill on account of scrollbar */
+
   & > header {
     border-bottom: solid $borderColour 1px;
     grid-area: header;
