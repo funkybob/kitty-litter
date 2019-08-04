@@ -53,9 +53,6 @@ def truncate(html, length):
 @Site.register_context_provider
 def global_context(ctx):
 
-    with open('global.yml') as fin:
-        ctx.update(yaml.load(fin, Loader=yaml.Loader))
-
     ctx['shorten'] = truncate
     ctx['safe'] = SafeStr
 

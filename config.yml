@@ -1,3 +1,10 @@
+plugins:
+  - gilbert.plugins.yaml
+  - gilbert.plugins.scss
+
+global:
+    sitename: Kitty Litter
+
 content_type:
   SCSS:
     output_style: 'compressed'
