@@ -170,6 +170,11 @@ article {
     }
   }
 
+  > footer {
+    border-top: solid $borderColour 1px;
+    padding: 0.5em;
+  }
+
 }
 
 
