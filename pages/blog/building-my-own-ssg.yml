@@ -147,7 +147,7 @@ The second says the `name` (original filename) must start with `blog/`.
 
 And finally, it must have a `date` attribute.
 
-# Futue Plans
+# Future Plans
 
 Right now I'm not happy with the render speed, though a lot of that is actually
 the load speed, since MarkdownPage renders the markdown on load.
