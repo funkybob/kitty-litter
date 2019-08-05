@@ -3,6 +3,7 @@ from collections import Counter
 from pathlib import Path
 
 import yaml
+from lxml import html
 
 from stencil import SafeStr
 
@@ -43,17 +44,15 @@ class TagIndex(Collection):
                 target.write_text(template.render(ctx))
 
 
-import html5lib
-
-def truncate(html, length):
-    stream = html5lib.parse(html[:length])
-    return SafeStr(html5lib.serializer.serialize(stream))
+def excerpt(content, length):
+    fragments = html.fromstring(content)
+    return SafeStr(''.join(html.tostring(x, encoding='unicode') for x in fragments[:length]))
 
 
 @Site.register_context_provider
 def global_context(ctx):
 
-    ctx['shorten'] = truncate
+    ctx['excerpt'] = excerpt
     ctx['safe'] = SafeStr
 
     return ctx

@@ -5,7 +5,7 @@
       <time class="published" datetime="{{ post.date }}">{{ post.date.strftime("%a, %d %b %Y") }}</time>
     </div>
   </header>
-  <p>{{ shorten(post.content, 600) }}</p>
+  <p>{{ excerpt(post.content, 3) }}</p>
   <footer>
     <a href="{{ post.url }}">Continue Reading</a>
   </footer>
