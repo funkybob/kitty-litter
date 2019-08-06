@@ -7,7 +7,7 @@ verify_ssl = true
 
 [packages]
 gilbert = "*"
-html5lib = "*"
+lxml = "*"
 
 [requires]
 python_version = "3.7"
