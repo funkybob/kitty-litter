@@ -8,7 +8,7 @@ from lxml import html
 from stencil import SafeStr
 
 from gilbert import Site
-from gilbert.plugins.collection import Collection
+from gilbert.plugins.selection import Selection
 from gilbert.plugins.markdown import MarkdownPage
 from gilbert.utils import oneshot
 
@@ -17,7 +17,7 @@ class BlogPost(MarkdownPage):
     template = "blog/post_detail.html"
 
 
-class TagIndex(Collection):
+class TagIndex(Selection):
     exclude_tags: typing.Collection[str] = set()
     template = 'tag_index.html'
 

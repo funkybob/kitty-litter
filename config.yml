@@ -1,6 +1,7 @@
 plugins:
   - gilbert.plugins.yaml
   - gilbert.plugins.scss
+  - gilbert.plugins.selection
 
 global:
     sitename: Kitty Litter
