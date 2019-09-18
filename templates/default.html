@@ -22,6 +22,11 @@
 	<aside>
 		<header>
 			<h1> {{ this.title }} {% block subtitle %}{% endblock %} </h1>
+{% if this.date %}
+			<p>
+				Published: <time class="published" datetime="{{ this.date }}">{{ this.date.strftime("%a, %d %b %Y") }}</time>
+			</p>
+{% endif %}
 		</header>
 
 		<section>
