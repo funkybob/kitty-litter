@@ -10,8 +10,8 @@
     <ul>
   {% for tag in site.pages["blog/tags.yml"].tag_counts.most_common() %}
       <li>
-          <span><small>{{ tag[1] }} posts</small></span>
           <a href="/blog/tags/{{ tag[0] }}.html">{{ tag[0] }}</a>
+          <span><small>{{ tag[1] }} posts</small></span>
       </li>
   {% endfor %}
     </ul>
