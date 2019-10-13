@@ -34,7 +34,7 @@ body {
   height: 100vh;
 
   display: grid;
-  grid-template-columns: 30% 1fr;
+  grid-template-columns: 25% 1fr;
   grid-template-rows: auto 1fr;
   grid-template-areas:
     "header header"
@@ -116,6 +116,7 @@ main {
   padding: 1em;
 
   > * {
+    max-width: 50vw;
     margin-bottom: 1em;
   }
 
