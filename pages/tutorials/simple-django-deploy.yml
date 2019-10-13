@@ -6,6 +6,8 @@ extras:
   - def_list
   - toc
   - attr_list
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
 The following is a simplified version of my Django Deployment guide, reduced
 for just running a single site.
@@ -18,11 +20,9 @@ ready to host a single Django site.
 credit for my referral. More details
 [here](https://www.digitalocean.com/referral-program/) :)
 
-## Table of Contents
-
 [TOC]
 
-## The overview
+## Overview
 
 I'll be using Debian, as it's generally current, doesn't bloat your basic
 install too much, and has a good track record on servers.
@@ -57,12 +57,12 @@ SMTP
 
 We'll be keeping the web sites in `/srv/www/` with the following layout:
 
-    venv/ - the virtualenv
-    html/ - static and media
-    logs/
-    code/ - where our project's code lives
+- venv/ - the virtualenv
+- html/ - static and media
+- logs/
+- code/ - where our project's code lives
 
-## Before we begin.
+## Before we begin
 
 In this guide I'll assume some basic familiarity with using Linux and its ilk.
 
@@ -124,10 +124,12 @@ Before we set up our services, we need to do some routine house keeping.
 
 Log into your new droplet
 
+    :::console
     $ ssh root@{your-droplets-ip}
 
 First, we update the package data (remember, `#` means do this as root):
 
+    :::console
     # apt-get update
     # apt-get autoclean
 
@@ -135,14 +137,17 @@ The first rule of securing a server is to not run network services you don't
 need - minimal attack surface. So we're going to remove `rpcbind`, as we don't
 use NFS.
 
+    :::console
     # apt-get purge rpcbind
 
 Now we update all our installed packages.
 
+    :::console
     # apt-get dist-upgrade
 
 Next, some packages we'll need:
 
+    :::console
     # apt-get install python3 python3-dev zlib1g-dev libjpeg-dev libtiff-dev fail2ban git htop
 
 Some of this is obvious [python3]. We need `python3-dev` for building Python
@@ -161,10 +166,12 @@ a lot better.
 
 After that, we clean up any packages that are installed but no longer needed.
 
+    :::console
     # apt-get autoremove
 
 Finally, reboot to make sure the latest everything is running.
 
+    :::console
     # reboot
 
 ### Final step
@@ -175,6 +182,7 @@ _absolutely_ _must_.
 
 This helps to prevent mistakes; we all make mistakes.
 
+    :::console
     # useradd -G www-data,sudo -m {username}
     # passwd {username}
 
@@ -190,6 +198,7 @@ In a new window, try logging in to make sure this worked.
 We want to configure to _only_ accept mail from local connections, since we have
 no need to receive emails, and don't want to be a relay for spam.
 
+    :::console
     # apt-get install opensmtpd
 
 The default config will only accept connections on localhost, so is good enough.
@@ -198,6 +207,7 @@ The default config will only accept connections on localhost, so is good enough.
 
 Installing Postgres is simple, and the default configuration is fine.
 
+    :::console
     # apt-get install postgresql-11
 
 We'll need to create a user for our apps to connect as. In a more complex
@@ -207,6 +217,7 @@ www-data user our web site runs as.
 
 Here we use `su` to run the command as the postgres user.
 
+    :::console
     # su - postgres -c "createuser www-data -P"
 
 This will create a role for our `www-data` user, and prompt you for a password
@@ -215,6 +226,7 @@ for it.
 Next, we create a role for our selves that is allowed to create databases, and
 is added to the `www-data` role so it can create them owned by that role.
 
+    :::console
     # su - postgres -c "createuser -g www-data -d {username}"
 
 We could allow `www-data` to create databases, but it's safer to not. This
@@ -227,17 +239,18 @@ You can edit them in the file `/etc/postgresql/9.6/main/postgresql.conf`.
 
 Here are some settings you can tune for memory use:
 
- - shared_buffers
- - temp_buffers
- - work_mem
- - max_connections
- - maintenance_work_mem
- - max_stack_size
+- shared_buffers
+- temp_buffers
+- work_mem
+- max_connections
+- maintenance_work_mem
+- max_stack_size
 
 See [here](http://www.postgresql.org/docs/9.6/static/runtime-config-resource.html) for more details.
 
 Once you've adjusted these, restart postgres:
 
+    :::console
     # systemctl restart postgresql
 
 ### Configuring nginx
@@ -246,12 +259,14 @@ Debian provides 3 different builds of nginx, with different options compiled in.
 The smallest we can use is nginx-light, since we'll only be wanting uWSGI and
 the "gzip static" module.
 
+    :::console
     # apt-get install nginx-light
 
 Now want to put the following in a new file called
 `/etc/nginx/sites-available/mysite` - the directory should already exist,
 created by the `nginx` package.
 
+    :::nginx
     # Allow gzip compression
     gzip_types text/css application/json application/x-javascript;
     gzip_comp_level 6;
@@ -282,6 +297,7 @@ created by the `nginx` package.
 
 We then remove the default site config, and symlink in our own
 
+    :::console
     # cd /etc/nginx/sites-enabled
     # rm default
     # ln -s ../sites-available/mysite
@@ -295,6 +311,7 @@ Now restart nginx to take on the new config
 
 We need to make space for our apps to live, and the links for their hostnames.
 
+    :::console
     # cd /srv
     # mkdir www
     # chown www-data:www-data www
@@ -304,20 +321,24 @@ We need to make space for our apps to live, and the links for their hostnames.
 
 From here on, use your normal user account for all actions.
 
+    :::console
     $ cd /srv/www
 
 Make all the directories we need:
 
+    :::console
     $ mkdir -p code html/static html/media logs
     $ chgrp -R www-data logs html
     $ chmod -R g+w logs html
 
 Create a virtualenv, and activate it, and update pip:
 
+    :::console
     $ python3 -m venv venv
 
 Then:
 
+    :::console
     $ . venv/bin/activate
     $ pip install -U --force pip
 
@@ -327,39 +348,47 @@ version of pip.
 
 Check out your project into code/
 
+    :::console
     $ git clone {github url} code/
 
 This assumes your project is the top level of your git repo (i.e. where
 manage.py is). If this is not the case, check it out into another directory, and
 symlink the root of the project (where manage.py lives) to code/
 
+    :::console
     $ rmdir code
     $ ln -s myrepo/myproject code
 
 Install your requirements
 
+    :::console
     $ pip install -r code/requirements.txt
 
 Create a database:
 
+    :::console
     $ createdb -O www-data mysite
 
 Migrate your DB schema:
 
+    :::console
     $ cd code
     $ python manage.py migrate
 
 And create a superuser for you to log in with:
 
+    :::console
     $ python manage.py createsuperuser
 
 Your project should be configured with
 
+    :::py
     STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'html', 'static')
     MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'html', 'media')
 
 so that when you run:
 
+    :::console
     $ python manage.py collectstatic --noinput
 
 it will collect into `/srv/www/html/static/`
@@ -369,8 +398,9 @@ This way nginx will find `/static/*` when it looks in `/srv/www/html/`.
 
 You also need to make sure your DATABASES is configured correctly. Ensure you
 have `psycopg2-binary` in your requirements.txt, and set your DATABASES to
-something like:
+something like
 
+    :::py
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -385,6 +415,7 @@ Next, we'll pre-compress our CSS and JS. This saves the CPU and memory of
 compressing it on demand, and allows us to devote more time _now_ to compressing
 it more.
 
+    :::console
     $ cd /srv/www/html/
     $ find . -name "*.js" -exec gzip -9k {} ";"
     $ find . -name "*.css" -exec gzip -9k {} ";"
@@ -393,16 +424,19 @@ Don't forget to change your settings to `DEBUG = False`. When you do this, you
 will also need to set `ALLOWED_HOSTS`. Since nginx is validating the hostname
 for us, we can safely set it as:
 
+    :::py
     ALLOWED_HOSTS = ['*']
 
 ### Configuring uWSGI
 
 Bring in the parts of uWSGI that we need:
 
+    :::console
     # apt-get install uwsgi-plugin-python3 uwsgi
 
 Now let's add our uWSGI config.  Into `/etc/uwsgi/apps-available/mysite.ini` put:
 
+    :::ini
     [uwsgi]
     procname-master = MySite
 
@@ -441,20 +475,23 @@ Now let's add our uWSGI config.  Into `/etc/uwsgi/apps-available/mysite.ini` put
 
 And just like with nginx, we need to symlink it into apps-enabled:
 
+    :::console
     # cd /etc/uwsgi/apps-enabled
     # ln -s ../apps-available/mysite.ini .
 
 And we can start it up using:
 
+    :::console
     # systemctl restart uwsgi
 
 If this works without issue, we can enable it to start on boot:
 
+    :::console
     # systemctl enable uwsgi
 
 ## Congratulations! {: .booyah }
 
-Your site is live!
+## Your site is live! {: .booyah }
 
 
 # How does it work?
@@ -482,4 +519,4 @@ So, let's consider different cases and how each part reacts.
 # And finally...
 
 If you have any more questions, feedback, etc, about this guide, please seek me
-out in #django on irc.freenode.net ...
+out in #django on [irc.freenode.net](https://freenode.net/) ...
