@@ -12,29 +12,36 @@ html, body {
   scroll-behavior: smooth;
 }
 
-a {
-  text-decoration: none;
-  color: inherit;
+/* Pull grid placement out separately */
+body {
+  display: grid;
+  grid-template-columns: 25% 1fr 25%;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header header header"
+    "sidebar main offbar"
+    "footer footer footer"
+    ;
 
-  border-bottom: solid transparent 1px;
+  > header {
+    grid-area: header;
+  }
+  > footer {
+    grid-area: footer;
+  }
+  > aside {
 
-  &:hover {
-    border-bottom: solid $borderColour 1px;
+    &.left {
+      grid-area: sidebar;
+      padding: 1em 0 1em 1em;
+    }
+    &.right {
+      grid-area: offbar;
+      padding: 1em 1em 1em 0;
+    }
+
   }
 }
-
-
-a[href^="https://"],
-a[href^="http://"] {
-  outline: dotted 1px;
-}
-a[href^="https://"]:before,
-a[href^="http://"]:before {
-  content: '\1f517';
-}
-
-.warning { color: #f44; }
-.booyah { background-color: #cfc; text-align: center; padding: 1em; }
 
 body {
   background-color: #f4f4f4;
@@ -42,33 +49,24 @@ body {
   width: 100vw;
   height: 100vh;
 
-  display: grid;
-  grid-template-columns: 25% 1fr 25%;
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "header header header"
-    "sidebar main offbar";
-
   overflow-x: hidden; /* don't spill on account of scrollbar */
 
-  & > header {
+  > header {
     border-bottom: solid $borderColour 1px;
-    grid-area: header;
     background-color: white;
 
     line-height: 40px;
 
-    div {
+    > nav,
+    > div {
       display: inline-block;
       font-size: 1em;
       font-variant: small-caps;
       padding: 0;
-      border-left: solid $borderColour 1px;
-
     }
 
-    div:first-of-type {
-      border-left-width: 0;
+    > nav {
+      border-left: solid $borderColour 1px;
     }
 
     ul {
@@ -92,17 +90,14 @@ body {
     }
   }
 
+  > footer {
+    border-top: solid $borderColour 1px;
+    background-color: white;
+
+    line-height: 40px;
+  }
+
   > aside {
-
-    &.left {
-      grid-area: sidebar;
-      padding: 1em 0 1em 1em;
-    }
-    &.right {
-      grid-area: offbar;
-      padding: 1em 1em 1em 0;
-    }
-
 
     > header {
       background-color: white;
@@ -120,16 +115,12 @@ body {
     }
   }
 
-  > footer {
-    grid-area: footer;
-  }
-
 }
 
 main {
   grid-area: main;
 
-  padding: 1em;
+  padding: 1em 1em 0 1em;
 
   > * {
     max-width: 50vw;
@@ -221,6 +212,37 @@ table {
       background-color: #eee;
     }
   }
+}
+
+p {
+  margin: 0 0 1em 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+a[href^="https://"],
+a[href^="http://"] {
+  outline: dotted 1px;
+}
+a[href^="https://"]:before,
+a[href^="http://"]:before {
+  content: '\1f517';
+}
+
+.warning {
+  color: #f44;
+}
+.booyah {
+  background-color: #cfc;
+  text-align: center;
+  padding: 1em;
 }
 
 pre {

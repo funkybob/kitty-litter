@@ -15,9 +15,9 @@
 				<li><a href="/index.html"><img src="/images/logo.png" alt="logo"> {{ sitename }} </a></li>
 			</ul>
 		</div>
-		<div>
+		<nav>
 			{% include "menu.html" pages=site.content['menu/main.yml'].pages %}
-		</div>
+		</nav>
 	</header>
 
 	<aside class="left">
@@ -51,9 +51,8 @@
 			</header>
 			<p> Did I make your life easier? </p>
 			<p> Feeling generous? </p>
-			<p> <a href="https://paypal.me/FunkyBob">Maybe throw me a few bucks! :)</a> </p>
+			<p> Click <a href="https://paypal.me/FunkyBob">here</a> to maybe throw me a few bucks! :) </p>
 		</section>
-
 		{% block offbar %}{% endblock %}
 	</aside>
 
@@ -62,6 +61,10 @@
 		<section> {{ safe(this.content) }} </section>
 {% endblock %}
 	</main>
+
+	<footer>
+		<p></p>
+	</footer>
 
 </body>
 </html>
