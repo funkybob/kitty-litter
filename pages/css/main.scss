@@ -7,7 +7,9 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: sans-serif;
-  font-size: 1rem;
+  font-size: 1.1rem;
+
+  scroll-behavior: smooth;
 }
 
 a {
@@ -21,11 +23,18 @@ a {
   }
 }
 
+
+a[href^="https://"],
+a[href^="http://"] {
+  outline: dotted 1px;
+}
 a[href^="https://"]:before,
 a[href^="http://"]:before {
   content: '\1f517';
 }
 
+.warning { color: #f44; }
+.booyah { background-color: #cfc; text-align: center; padding: 1em; }
 
 body {
   background-color: #f4f4f4;
@@ -34,11 +43,11 @@ body {
   height: 100vh;
 
   display: grid;
-  grid-template-columns: 25% 1fr;
+  grid-template-columns: 25% 1fr 25%;
   grid-template-rows: auto 1fr;
   grid-template-areas:
-    "header header"
-    "sidebar main";
+    "header header header"
+    "sidebar main offbar";
 
   overflow-x: hidden; /* don't spill on account of scrollbar */
 
@@ -84,9 +93,16 @@ body {
   }
 
   > aside {
-    grid-area: sidebar;
 
-    padding: 1em 0 1em 1em;
+    &.left {
+      grid-area: sidebar;
+      padding: 1em 0 1em 1em;
+    }
+    &.right {
+      grid-area: offbar;
+      padding: 1em 1em 1em 0;
+    }
+
 
     > header {
       background-color: white;
@@ -208,7 +224,7 @@ table {
 }
 
 pre {
-  background-color: #ffc;
+  background-color: #ccf;
   padding: 1em;
   line-height: 1.5em;
   font-weight: bolder;
@@ -225,3 +241,13 @@ code {
 
 dl { line-height: 1.5; }
 dt { font-weight: bold; }
+
+/* for markdown [TOC] */
+.toc {
+
+  ul {
+    list-style: none;
+    line-height: 1.5em;
+  }
+
+}

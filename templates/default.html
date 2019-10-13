@@ -19,7 +19,7 @@
 		</div>
 	</header>
 
-	<aside>
+	<aside class="left">
 		<header>
 			<h1> {{ this.title }} {% block subtitle %}{% endblock %} </h1>
 {% if this.date %}
@@ -38,6 +38,12 @@
 			<p>Contained herein are some things I thought important enough to write about.</p>
 		</section>
 
+		{% block sidebar %}{% endblock %}
+
+	</aside>
+
+	<aside class="right">
+
 		<section>
 			<header>
 				<h2> Donations </h2>
@@ -47,8 +53,7 @@
 			<p> <a href="https://paypal.me/FunkyBob">Maybe throw me a few bucks! :)</a> </p>
 		</section>
 
-		{% block sidebar %}{% endblock %}
-
+		{% block offbar %}{% endblock %}
 	</aside>
 
 	<main>
