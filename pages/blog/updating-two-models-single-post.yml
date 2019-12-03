@@ -27,7 +27,7 @@ one view:
 
         if request.method == 'POST':
             user_form = UserForm(request.POST, instance=request.user)
-            profile_form = ProfileForm(request.POST, instancel=request.user.profile)
+            profile_form = ProfileForm(request.POST, instance=request.user.profile)
 
             if all([user_form.is_valid(), profile_form.is_valid()]):
                 user = user_form.save()
