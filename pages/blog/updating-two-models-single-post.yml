@@ -24,7 +24,9 @@ So, as a simple example, here's a view that updates a User and their Profile in 
 
             if all([user_form.is_valid(), profile_form.is_valid()]):
                 user = user_form.save()
-                profile = profile_form.save()
+                profile = profile_form.save(commit=False)
+                profile.user = user
+                profile.save()
                 return redirect(user)
 
         else:
