@@ -20,6 +20,24 @@ true; it uses multiple forms from the one submission.
 
 ## The answer
 
+### The ModelForms
+
+Firstly, the forms don't need to be anything special, but for one point:
+
+    class UserForm(models.ModelForm):
+        model = models.User
+        fields = [...]
+
+    class ProfileForm(models.ModelForm):
+        model = models.Profile
+        fields = '__all__'
+        exclude = ['user']
+
+We omit the `user` field so the `ProfileForm` won't show a drop-down list of
+`User`s to pick from.
+
+### The view
+
 So, as a simple example, here's a view that updates a User and their Profile in
 one view:
 
@@ -66,7 +84,7 @@ The two most significant things to notice here:
 # Creating two related records
 
 So the above works great if you have existing instances, but what if you want
-to create two related models?
+to *create* two related models?
 
 Fortunately, the answer turns out to be almost as simple:
 
@@ -91,6 +109,9 @@ Fortunately, the answer turns out to be almost as simple:
             'user_form': user_form,
             'profile_form': profile_form,
         })
+
+The differnce here is we need to edit the `Profile` instance before it's saved,
+to set the `user` field to our newly created `User` instance.
 
 See
 [here](https://docs.djangoproject.com/en/3.0/topics/forms/modelforms/#the-save-method)
