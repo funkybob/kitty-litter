@@ -12,6 +12,12 @@ html, body {
   scroll-behavior: smooth;
 }
 
+/* Responsive image sizes */
+img {
+  width: 100%;
+  height: auto;
+}
+
 /* Pull grid placement out separately */
 body {
   display: grid;
@@ -44,7 +50,7 @@ body {
 }
 
 body {
-  background-color: #f4f4f4;
+  background-color: #ccc;
 
   width: 100vw;
   height: 100vh;
@@ -53,7 +59,8 @@ body {
 
   > header {
     border-bottom: solid $borderColour 1px;
-    background-color: white;
+    background-color: #333;
+    color: white;
 
     line-height: 40px;
 
@@ -79,7 +86,7 @@ body {
 
         a {
           margin: 0;
-          padding: 1em;
+          padding: 0.7em;
           display: inline-block;
 
           img {
