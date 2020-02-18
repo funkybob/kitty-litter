@@ -251,6 +251,15 @@ a[href^="http://"]:before {
   text-align: center;
   padding: 1em;
 }
+.deploy {
+  background-color: #8f8;
+}
+
+.admonition {
+  padding: 1em;
+
+  .admonition-title { font-weight: bold; }
+}
 
 pre {
   background-color: #ccf;

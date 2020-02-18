@@ -7,6 +7,7 @@ extras:
   - toc
   - attr_list
   - codehilite
+  - admonition
 extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
 The following is a simplified version of my Django Deployment guide, reduced
@@ -81,7 +82,7 @@ In this tutorial we will **never** be using `sudo`. In all cases where you
 need to run something as root, either SSH in as root, or use the `su` command.
 
 [Note: out of the box Debian does not include sudo. And I never install it.
-Think about this.]
+Food for thought.]
 
 As a convention in this document, any commands prefixed with `#` are expected
 to be run as root, and those with `$` as a normal user.
@@ -148,13 +149,12 @@ Now we update all our installed packages.
 Next, some packages we'll need:
 
     :::console
-    # apt-get install python3 python3-dev zlib1g-dev libjpeg-dev libtiff-dev fail2ban git htop
+    # apt-get install python3 python3-venv fail2ban git htop
 
-Some of this is obvious [python3]. We need `python3-dev` for building Python
-packages that require compilation, such as `Pillow` and psycopg2.
+Some of this should be obvious (e.g. python3).
 
-Pillow also requires the image libraries libjpeg and libtiff, and uses zlib for
-PNG.
+Debian by default doesn't include the `venv` module with Python, so we must
+ask for that separately.
 
 We use `fail2ban` to avoid filling our logs with the ever persistent botnet
 failed logins.
@@ -210,10 +210,16 @@ Installing Postgres is simple, and the default configuration is fine.
     :::console
     # apt-get install postgresql-11
 
-We'll need to create a user for our apps to connect as. In a more complex
-install, with multiple apps, we would create a separate user per app, for better
-isolation. However, for now we'll just create a "www-data" role, to match the
-www-data user our web site runs as.
+The install will then prompt you to start the freshly created 'cluster'.
+
+    ::console
+    # pg_ctlcluster 11 main start
+
+Postgres keeps its own list of users, separate from the system. We'll need to
+create a user for our apps to connect as. In a more complex install, with
+multiple apps, we would create a separate user per app, for better isolation.
+However, for now we'll just create a "www-data" role, to match the www-data
+user our web site runs as.
 
 Here we use `su` to run the command as the postgres user.
 
@@ -230,12 +236,12 @@ is added to the `www-data` role so it can create them owned by that role.
     # su - postgres -c "createuser -g www-data -d {username}"
 
 We could allow `www-data` to create databases, but it's safer to not. This
-follows the principle of least privilege.
+follows the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege).
 
 Since we're on a small memory budget, you may want to tweak some of the Postgres
 settings.
 
-You can edit them in the file `/etc/postgresql/9.6/main/postgresql.conf`.
+You can edit them in the file `/etc/postgresql/11/main/postgresql.conf`.
 
 Here are some settings you can tune for memory use:
 
@@ -246,7 +252,9 @@ Here are some settings you can tune for memory use:
 - maintenance_work_mem
 - max_stack_size
 
-See [here](http://www.postgresql.org/docs/9.6/static/runtime-config-resource.html) for more details.
+See [here](https://www.postgresql.org/docs/11/runtime-config-resource.html#RUNTIME-CONFIG-RESOURCE-MEMORY) for more details.
+
+Beware, however, that setting these values too low can have detrimental effects on performance.
 
 Once you've adjusted these, restart postgres:
 
@@ -283,15 +291,17 @@ created by the `nginx` package.
         # Where to look for content (static and media)
         root    /srv/www/html/;
 
-        # nginx docs recommend try_files over "if"
-        location    /   {
-            # Try to serve existing files first
-            try_files $uri @proxy =404;
-        }
+        # Defines the connection for talking to our Django app service
         location @proxy {
             # Pass other requests to uWSGI
             uwsgi_pass unix://srv/www/server.sock;
             include uwsgi_params;
+        }
+
+        # nginx docs recommend try_files over "if"
+        location    /   {
+            # Try to serve existing files first
+            try_files $uri @proxy =404;
         }
     }
 
@@ -304,6 +314,7 @@ We then remove the default site config, and symlink in our own
 
 Now restart nginx to take on the new config
 
+    :::console
     # systemctl restart nginx
 
 
@@ -317,7 +328,12 @@ We need to make space for our apps to live, and the links for their hostnames.
     # chown www-data:www-data www
     # chmod g+w www
 
-## Creating a site
+## Creating the site
+
+Note that some commands are once off for setting up the site, and some will need to be run each deploy.
+
+Commands which must be re-run each deploy will be marked like this.
+{: .deploy }
 
 From here on, use your normal user account for all actions.
 
@@ -331,20 +347,16 @@ Make all the directories we need:
     $ chgrp -R www-data logs html
     $ chmod -R g+w logs html
 
-Create a virtualenv, and activate it, and update pip:
+Create a virtualenv, and activate it:
 
     :::console
     $ python3 -m venv venv
+    $ . venv/bin/activate
 
-Then:
+Next we make sure `pip` is up to date:
 
     :::console
-    $ . venv/bin/activate
-    $ pip install -U --force pip
-
-The `--force` is here because some editions of Debian ship a custom version of
-`pip` and it won't update. We want to ensure you get a current, stock, release
-version of pip.
+    $ pip install -U pip
 
 Check out your project into code/
 
@@ -352,12 +364,17 @@ Check out your project into code/
     $ git clone {github url} code/
 
 This assumes your project is the top level of your git repo (i.e. where
-manage.py is). If this is not the case, check it out into another directory, and
-symlink the root of the project (where manage.py lives) to code/
+manage.py is). If this is not the case, check it out into another directory,
+and symlink the root of the project (where manage.py lives) to code/
 
     :::console
     $ rmdir code
     $ ln -s myrepo/myproject code
+
+This should be the directory with `manage.py` in it.
+
+!!! type "Next deploy"
+    On your next deploy, you need only `git pull` from within the `code` dir.
 
 Install your requirements
 
@@ -369,51 +386,60 @@ Create a database:
     :::console
     $ createdb -O www-data mysite
 
-Migrate your DB schema:
+Configure your database settings:
 
-    :::console
-    $ cd code
-    $ python manage.py migrate
-
-And create a superuser for you to log in with:
-
-    :::console
-    $ python manage.py createsuperuser
-
-Your project should be configured with
-
-    :::py
-    STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'html', 'static')
-    MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'html', 'media')
-
-so that when you run:
-
-    :::console
-    $ python manage.py collectstatic --noinput
-
-it will collect into `/srv/www/html/static/`
-
-This assumes you have `STATIC_URL = '/static/'` and `MEDIA_URL = '/media/'`.
-This way nginx will find `/static/*` when it looks in `/srv/www/html/`.
-
-You also need to make sure your DATABASES is configured correctly. Ensure you
-have `psycopg2-binary` in your requirements.txt, and set your DATABASES to
-something like
+You need to make sure your `settings.DATABASES` is configured correctly.
+Ensure you have `psycopg2-binary` in your requirements.txt, and set your
+`settings.DATABASES` to something like:
 
     :::py
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': 'mysite',
+            'NAME': 'mysite',  # the name you passed to "createdb" above
             'USER': 'www-data',
             'PASSWORD': 'thepasswordyouset',
             'HOST': 'localhost',
         }
     }
 
+Migrate your DB schema:
+{: .deploy }
+
+    :::console
+    $ cd code
+    $ python manage.py migrate
+
+
+And create a superuser for you to log in with:
+
+    :::console
+    $ python manage.py createsuperuser
+
+In your `settings.py` ensure you have:
+
+    :::py
+    # These two are the default values
+    STATIC_URL = '/static/'
+    MEDIA_URL = '/media/'
+
+    # These settings might not yet exist in your settings.py
+    STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'html', 'static')
+    MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'html', 'media')
+
+This way nginx will find `/static/*` and `/media/*` when it looks in
+`/srv/www/html/`.
+
+Now run `collectstatic`:
+{: .deploy }
+
+    :::console
+    $ python manage.py collectstatic --noinput
+
 Next, we'll pre-compress our CSS and JS. This saves the CPU and memory of
 compressing it on demand, and allows us to devote more time _now_ to compressing
 it more.
+{: .deploy }
 
     :::console
     $ cd /srv/www/html/
@@ -421,8 +447,8 @@ it more.
     $ find . -name "*.css" -exec gzip -9k {} ";"
 
 Don't forget to change your settings to `DEBUG = False`. When you do this, you
-will also need to set `ALLOWED_HOSTS`. Since nginx is validating the hostname
-for us, we can safely set it as:
+will also need to set `ALLOWED_HOSTS`. Since we configured nginx to match
+against the host name, we can safely set it as:
 
     :::py
     ALLOWED_HOSTS = ['*']
@@ -440,9 +466,10 @@ Now let's add our uWSGI config.  Into `/etc/uwsgi/apps-available/mysite.ini` put
     [uwsgi]
     procname-master = MySite
 
+    # Now paths can be specified relative to here.
     chdir = /srv/www/code/
 
-    socket = /srv/www/server.sock
+    socket = server.sock
     # Task management
     ; Max 4 processes
     processes = 4
@@ -480,6 +507,7 @@ And just like with nginx, we need to symlink it into apps-enabled:
     # ln -s ../apps-available/mysite.ini .
 
 And we can start it up using:
+{: .deploy }
 
     :::console
     # systemctl restart uwsgi
