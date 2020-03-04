@@ -1,0 +1,8 @@
+content_type: Selection
+filter_by:
+  all:
+    - attr: ['date']
+    - startswith:
+      - attr: ["name"]
+      - "recipes/"
+---

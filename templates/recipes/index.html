@@ -1,0 +1,14 @@
+{% extends "recipes/base.html" %}
+
+{% block content %}
+
+{{ block.super }}
+
+<section>
+
+    {% include "menu.html" pages=site.content['menu/recipe.yml'].pages %}
+
+</section>
+
+
+{% endblock %}

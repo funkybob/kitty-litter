@@ -17,6 +17,10 @@ class BlogPost(MarkdownPage):
     template = "blog/post_detail.html"
 
 
+class RecipePost(MarkdownPage):
+    template = 'recipes/detail.html'
+
+
 class TagIndex(Selection):
     exclude_tags: typing.Collection[str] = set()
     template = 'tag_index.html'

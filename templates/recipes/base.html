@@ -1,0 +1,12 @@
+{% extends "default.html" %}
+
+{% block sidebar %}
+<section>
+    <header>
+      <h2>Recipes</h2>
+    </header>
+    <nav>
+      {% include "menu.html" pages=site.content['menu/recipe.yml'].pages %}
+    </nav>
+  </section>
+{% endblock %}
