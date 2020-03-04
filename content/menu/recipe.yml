@@ -1,8 +1,9 @@
 content_type: Selection
+sort_by: -date
 filter_by:
   all:
+    - eq:
+      - attr: ["content_type"]
+      - "RecipePost"
     - attr: ['date']
-    - startswith:
-      - attr: ["name"]
-      - "recipes/"
 ---
