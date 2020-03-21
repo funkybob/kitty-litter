@@ -1,1 +1,9 @@
 {% extends "recipes/base.html" %}
+
+{% block offbar %}
+{% if this.image %}
+<section>
+    <img src="{{ this.image }}" alt="{{ this.imageAlt }}">
+</section>
+{% endif %}
+{% endblock %}
