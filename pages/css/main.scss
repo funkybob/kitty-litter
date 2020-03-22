@@ -58,6 +58,11 @@ body {
   overflow-x: hidden; /* don't spill on account of scrollbar */
 
   > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1em;
+
     border-bottom: solid $borderColour 1px;
     background-color: #333;
     color: white;
@@ -74,8 +79,11 @@ body {
 
     > nav {
       border-left: solid $borderColour 1px;
+
+      input[type=checkbox] { display: none; }
     }
 
+    /* Main menu */
     ul {
       list-style: none;
       margin: 0;
@@ -286,6 +294,59 @@ dt { font-weight: bold; }
   ul {
     list-style: none;
     line-height: 1.5em;
+  }
+
+}
+
+
+@media (max-width: 850px) {
+  body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "header"
+      "main"
+      "sidebar"
+      "offbar"
+      "footer"
+    ;
+
+    > header {
+      > nav {
+        position: relative;
+        > ul {
+          position: absolute;
+          display: inline-block;
+          background-color: #333;
+
+          li {
+            display: list-item;
+          }
+        }
+
+        label::before {
+          display: inline;
+          content: '\2630'
+        }
+
+        input[type=checkbox] ~ ul {
+          display: none;
+        }
+        input[type=checkbox]:checked ~ ul {
+          display: block;
+        }
+      }
+    }
+
+    > aside {
+      &.left, &.right {
+        padding: 1em 1em 0 1em;
+      }
+    }
+  }
+
+  main > * {
+    max-width: unset;
   }
 
 }
