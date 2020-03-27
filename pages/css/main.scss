@@ -91,20 +91,11 @@ body {
     /* Main menu */
     ul {
       list-style: none;
-      margin: 0;
-      padding: 0;
 
       li {
-        display: inline;
-
-        &:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-        }
+        display: inline-block;
 
         a {
-          margin: 0;
-          padding: 0.7em;
-          display: block;
 
           img {
             vertical-align: middle;
@@ -162,6 +153,10 @@ nav {
 
   li {
     display: flex;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
   }
 
   /* make children fill up the space */
@@ -176,7 +171,7 @@ nav {
   a, span {
     margin: 0;
     padding: 0.5em 0.75em;
-    display: inline-block;
+    display: block;
   }
   a {
     flex: 1 1 auto;
