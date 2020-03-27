@@ -23,14 +23,6 @@
 	</header>
 
 	<aside class="left">
-		<header>
-			<h1> {{ this.title }} {% block subtitle %}{% endblock %} </h1>
-{% if this.date %}
-			<p>
-				Published: <time class="published" datetime="{{ this.date }}">{{ this.date.strftime("%a, %d %b %Y") }}</time>
-			</p>
-{% endif %}
-		</header>
 
 		<section>
 			<header>
@@ -59,7 +51,16 @@
 	</aside>
 
 	<main>
-{% block content %}
+		<header>
+			<h1> {{ this.title }} {% block subtitle %}{% endblock %} </h1>
+{% if this.date %}
+			<p>
+				Published: <time class="published" datetime="{{ this.date }}">{{ this.date.strftime("%a, %d %b %Y") }}</time>
+			</p>
+{% endif %}
+		</header>
+
+		{% block content %}
 		<section> {{ safe(this.content) }} </section>
 {% endblock %}
 	</main>
