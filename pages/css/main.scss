@@ -97,10 +97,14 @@ body {
       li {
         display: inline;
 
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+
         a {
           margin: 0;
           padding: 0.7em;
-          display: inline-block;
+          display: block;
 
           img {
             vertical-align: middle;
@@ -321,6 +325,8 @@ dt { font-weight: bold; }
         position: relative;
         > ul {
           position: absolute;
+          right: 0;
+          width: 50vw;
           display: inline-block;
           background-color: #333;
 
