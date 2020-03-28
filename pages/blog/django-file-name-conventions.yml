@@ -1,0 +1,59 @@
+title: Django file name conventions
+date: 2011-06-20
+content_type: BlogPost
+tags:
+  - django
+  - forms
+  - python
+---
+
+# Conventions, not Rules
+
+As many newcomers to Python discover, a lot of things they've lived with as _rules_ in other languages [such as public/private members] ... and, conversely, some things they're accustomed to as conventions are now rules [like indenting].
+
+Now, Django continues its history of embracing Pythonic ideals when it comes to filenames.  Many frameworks are very strict about what goes where ... in almost all cases, Django couldn't care less.
+
+## What, really?
+
+Yes, really.  There are very few cases where you can't deviate from the convention ... however, these tend to bring with them costs that are rarely worth the effort.
+
+The short rule is: if Django has to look for it [as opposed to you importing it] it's probably best to follow convention.
+
+Below I'll go through the major players, and what limits or conditions apply if you want to bend Django to your OCD needs :)
+
+### Views
+
+Nope... no limits at all.  So long as you can import it in Python, you can use it.  This follows the short rule, since in all cases you tell Django where to look.
+
+### Models
+
+We all know models must be in models.py, right?  Well, not quite.  So long as Django can find them in the models module (either `models.py`, or  `models/__init__.py`) they can be defined in any file.  So, define them in whizzbang.py, but import them into models, and you're good ... with one caveat.
+
+If you don't define them in models, you will need to specify their app_label yourself.
+
+### Forms
+
+Much like views, Django doesn't care.  Because Django doesn't import forms - you do.
+
+### Templates
+
+Well, there's the standard loaders... so it's up to you.  But isn't it easier to just put them in app dirs?
+
+Sure, but then you have to worry about what order they're listed, in case two define the same template... etc etc.
+
+Well, this isn't a post about best practices on template naming, but remember this:  Very few reusable apps can justify shipping with their own templates.
+
+### Template Tags
+
+This is one of those cases where you really don't have a choice.  As by the short rule, this is (almost) exclusively accessed automatically by Django, so it needs to find it where it expects it.
+
+Still, it's not hard to keep your template tags in a directory called "templatetags/" now, is it? :)
+
+### Admin Classes
+
+If you're using autodiscover (and let's be honest -- who doesn't :) you must put this in admin.  However, since this is Python, you can put them elsewhere and just import them into admin if you want.
+
+# Summation
+
+I'm sure there's more I can add to this list, but you get the idea.  If Django has an established pattern for finding something itself, you're better off following the convention.  If you explicitly reference something for django (like views or forms) then you're free to do as you please.
+
