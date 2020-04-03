@@ -1,0 +1,44 @@
+title: Django semi-DRY Fields
+content_type: BlogPost
+date: 2012-02-03
+tags:
+  - django
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
+---
+
+# DRY fields
+
+So, your app is growing nicely, but you find yourself repeating the same field definition in a bunch of models.  The models themselves have nothing to do with each other, so an abstract base class isn't a fit, but at various points you want, say, prices to always be the same configuration of DecimalField, or titles to always allow the same size.
+
+So, you could sub-class the fields to produce your own pre-configured fields, but sometimes you want to vary them a little... this price is nullable, that title has help_text, and so on.
+
+## Partially done
+
+Enter the joy of functools.partial
+
+Here's a little sample from a project I'm currently working on:
+
+    :::py
+    import functools
+
+    PriceField = functools.partial(models.DecimalField, decimal_places=2,
+        max_digits=10)
+
+So what have we got here?  Now, on my models I can put:
+
+    :::py
+    class MyModel(models.Model):
+        price = PriceField()
+        tax = PriceField(null=True, blank=True, help_text='Where applicable.')
+
+So, now my two fields are DecimalFields, with the same digits, etc., but some differences.
+
+How about an even more common case:
+
+    :::py
+    from datetime import datetime
+
+    AutoDateTimeField = functools.partial(models.DateTimeField,
+        default=datetime.now)
