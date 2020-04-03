@@ -549,3 +549,13 @@ So, let's consider different cases and how each part reacts.
 
 If you have any more questions, feedback, etc, about this guide, please seek me
 out in #django on [irc.freenode.net](https://freenode.net/) ...
+
+
+# Credits
+
+Over the years, many people have helped me debug and refine this.
+
+These are some of them:
+
+ - kezabelle
+ - Dean
