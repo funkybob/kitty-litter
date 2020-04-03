@@ -467,7 +467,7 @@ Now let's add our uWSGI config.  Into `/etc/uwsgi/apps-available/mysite.ini` put
     procname-master = MySite
 
     # Now paths can be specified relative to here.
-    chdir = /srv/www/code/
+    chdir = /srv/www/
 
     socket = server.sock
     # Task management
