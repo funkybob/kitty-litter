@@ -489,12 +489,13 @@ Now let's add our uWSGI config.  Into `/etc/uwsgi/apps-available/mysite.ini` put
     log-x-forwarded-for = true
 
     # Python app
-    plugin = python
+    plugin = python3
     ; Activate this virtualenv
     virtualenv = venv/
     ; Add this dir to PYTHONPATH so Python can find our code
     pythonpath = code/
     ; The WSGI module to load
+    # remember to update this to your project's name!
     module = mysite.wsgi
 
     # Don't load the app in the Master - saves memory in quiet times
