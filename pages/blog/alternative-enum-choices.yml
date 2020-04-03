@@ -5,13 +5,21 @@ tags:
   - django
   - enum
   - python
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
-Those who've been reading my older posts may remember I showed how you could use Enum and IntEnum as a cleaner way to declare const-type values for choices lists in Django fields.
+Those who've been reading my older posts may remember I showed how you could
+use Enum and IntEnum as a cleaner way to declare const-type values for choices
+lists in Django fields.
 
-That solution never felt comfortable to me, because Enum values aren't simple values.
+That solution never felt comfortable to me, because Enum values aren't simple
+values.
 
-So after some playing around, and a brief look over the enum.py in python 3.5, I've come up with the following:
+So after some playing around, and a brief look over the enum.py in python 3.5,
+I've come up with the following:
 
+    :::py
     class ChoiceProperty:
         '''Descriptor class for yielding values, but not allowing setting.'''
         def __init__(self, value):
@@ -59,7 +67,8 @@ So after some playing around, and a brief look over the enum.py in python 3.5, I
 
 ## So, what does this all mean?
 
-First, there's the `ChoiceProperty`.  This follows the descriptor property so we can have attributes on our class that simply return a value they were told.
+First, there's the `ChoiceProperty`.  This follows the descriptor property so
+we can have attributes on our class that simply return a value they were told.
 They do this irrespective of if it's on an instance or the class itself!
 
 Last is the `Choices` class, which is empty except for declaring it has a metaclass.
@@ -76,6 +85,7 @@ And the `__iter__` method when you try to iterate it.
 
 ## So what can I do with it?
 
+    :::py
     >>> class STATE_CHOICES(Choices):
     ...     NEW = 0
     ...     IN_PROGRESS = 1
@@ -93,6 +103,7 @@ And the `__iter__` method when you try to iterate it.
 
 Now, does that look useful?
 
+    :::py
     class MyModel(models.Model):
         class STATUS(Choices):
             CLOSED = 0

@@ -6,15 +6,25 @@ tags:
   - django
   - javascript
   - python
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
-Django provides many decorators for use throughout your project.  They can be great time savers, and mastering them can help you DRY your code considerable.  However, they often confuse people as to how they work, or how to write their own.
+Django provides many decorators for use throughout your project.  They can be
+great time savers, and mastering them can help you DRY your code considerable.
+However, they often confuse people as to how they work, or how to write their
+own.
 
-In this post I plan to walk through an example of building up a simple decorator that tests if the user has a specific permission, and if not returning a 403 Forbidden response.
+In this post I plan to walk through an example of building up a simple
+decorator that tests if the user has a specific permission, and if not
+returning a 403 Forbidden response.
 
 # Decorator basics.
 
-The decorator syntax does _not_ add anything you can't already do in other ways.
+The decorator syntax does _not_ add anything you can't already do in other
+ways.
 
+    :::py
     def myview(...):
         ...
 
@@ -22,27 +32,35 @@ The decorator syntax does _not_ add anything you can't already do in other ways.
 
 is equivalent to:
 
+    :::py
     @mydecorator
     def myview(...):
         ...
 
-That's right - a decorator just calls your decorator function, passing your function [or class] as its only argument, and assigning the result to the same name.
+That's right - a decorator just calls your decorator function, passing your
+function [or class] as its only argument, and assigning the result to the same
+name.
 
 # Common Code
 
 So, in this scenario you would find yourself starting a lot of views like this:
 
+    :::py
     def myview(request, ...):
         if not request.user.has_perm('foo.bar'):
             return http.HttpResponseForbidden()
         ...
 
-Repeating this code is obviously tedious and hazardous.  Tedious because you're repeating yourself, and hazardous because you may update the permission name in one place, but not others.
+Repeating this code is obviously tedious and hazardous.  Tedious because you're
+repeating yourself, and hazardous because you may update the permission name in
+one place, but not others.
 
 # Step 1: Fixed permission
 
-First, we'll write a decorator that will do our permission test, but with a hard-coded permission.
+First, we'll write a decorator that will do our permission test, but with a
+hard-coded permission.
 
+    :::py
     def require_permission(view):
 
         def _inner(request, *args, **kwargs):
@@ -52,31 +70,42 @@ First, we'll write a decorator that will do our permission test, but with a hard
 
         return _inner
 
-So what just happened there?  We defined a new function which implements the permission check, and calls our view if it's ok, returning its result.  Any JavaScript developers will easily recognise this pattern.
+So what just happened there?  We defined a new function which implements the
+permission check, and calls our view if it's ok, returning its result.  Any
+JavaScript developers will easily recognise this pattern.
 
-The fact it can access the 'view' argument that was never passed to it is a factor of Python scoping.
+The fact it can access the 'view' argument that was never passed to it is a
+factor of Python scoping.
 
 We can use it as simply as:
 
+    :::py
     @require_permission
     def myview(request, ....):
         ...
 
 Which is equivalent, as mentioned, to:
 
+    :::py
     def myview(request, ...):
         ...
 
     myview = require_permission(myview)
 
-So, what's returned from require_permission [and assigned to myview] is the wrapper function defined in the decorator.
+So, what's returned from require_permission [and assigned to myview] is the
+wrapper function defined in the decorator.
 
 # Step 2: Variable permission
 
-But now we want to choose which permission to test for.  Your first thought may be to just pass another argument with the view, but that doesn't work with decorators - it's Python invoking the call, and it only passes one argument: the function.
+But now we want to choose which permission to test for.  Your first thought may
+be to just pass another argument with the view, but that doesn't work with
+decorators - it's Python invoking the call, and it only passes one argument:
+the function.
 
-So what we need is a way to produce new decorator functions, differing on which permission they test.  We need a decorator factory.
+So what we need is a way to produce new decorator functions, differing on which
+permission they test.  We need a decorator factory.
 
+    :::py
     def require_permission(perm):
 
         def _outer(view):
@@ -90,7 +119,8 @@ So what we need is a way to produce new decorator functions, differing on which 
 
 Holy Inception, Batman!
 
-So, now we have a function which returns a function, which returns a function, which calls our view!
+So, now we have a function which returns a function, which returns a function,
+which calls our view!
 
 So what happens here is:
 
@@ -100,8 +130,12 @@ So what happens here is:
 
 # Step 3: Tidying up
 
-There is one final step to be made.  It's not obvious, but currently if, for whatever reason, the decorator raises an exception, you won't know which decorated function raised the exception.  Fortunately, Python has a solution in functools: wraps.
+There is one final step to be made.  It's not obvious, but currently if, for
+whatever reason, the decorator raises an exception, you won't know which
+decorated function raised the exception.  Fortunately, Python has a solution in
+functools: wraps.
 
+    :::py
     from functools import wraps
 
     def require_permission(perm):
@@ -117,20 +151,31 @@ There is one final step to be made.  It's not obvious, but currently if, for wha
 
         return _outer
 
-The "@wraps" decorator copies the __name__, __module__, and __doc__ properties from the wrapped target, onto the function being decorated.  For more details, see [functools.wraps](https://docs.python.org/2/library/functools.html#functools.wraps)
+The "@wraps" decorator copies the __name__, __module__, and __doc__ properties
+from the wrapped target, onto the function being decorated.  For more details,
+see
+[functools.wraps](https://docs.python.org/2/library/functools.html#functools.wraps)
 
 # Finally
 
-Of course, there's no reason you can only call decorators using @, since they're just functions.  And so is our decorator factory.  So, coming back to the idea of DRYing out code, we can pre-generate decorators for specific permissions:
+Of course, there's no reason you can only call decorators using @, since
+they're just functions.  And so is our decorator factory.  So, coming back to
+the idea of DRYing out code, we can pre-generate decorators for specific
+permissions:
 
+    :::py
     require_foo_permission = require_permission('myapp.foo')
     require_bar_permission = require_permission('myapp.bar')
 
     @require_foo_permission
     def myview(request, ...):
 
-So now we've removed repetition of the same 'how to test for a permission' code, as well as avoided repeating the name of specific permissions.
+So now we've removed repetition of the same 'how to test for a permission'
+code, as well as avoided repeating the name of specific permissions.
 
 # Further reading
 
-The incomparable Graham Dumpleton has written an extensive series of posts on doing decorators properly, so I highly recommend [reading them](http://blog.dscpl.com.au/2014/01/how-you-implemented-your-python.html) yourself.
+The incomparable Graham Dumpleton has written an extensive series of posts on
+doing decorators properly, so I highly recommend [reading
+them](http://blog.dscpl.com.au/2014/01/how-you-implemented-your-python.html)
+yourself.

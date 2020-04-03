@@ -3,39 +3,58 @@ content_type: BlogPost
 date: 2012-09-08
 tags:
   - django
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
 ## Let the battle begin!
 
-In Django, using the session is just so EASY!  There it is on request, behaving like a dict, just being all easy to use.
+In Django, using the session is just so EASY!  There it is on request, behaving
+like a dict, just being all easy to use.
 
 But sometimes, you're actually better off using cookies.
 
 ## Why?
 
-Sessions are great if you have persistent state you need to store for a visitor, but don't want them to see or be able to meddle with.
+Sessions are great if you have persistent state you need to store for a
+visitor, but don't want them to see or be able to meddle with.
 
-And it's that "but" clause that makes all the difference.  If you have some data you need to tie to a visitor, but you don't care if they see it, you're often better of using Cookies.
+And it's that "but" clause that makes all the difference.  If you have some
+data you need to tie to a visitor, but you don't care if they see it, you're
+often better of using Cookies.
 
 ## Case in point.
 
-Recently, we found [through NewRelic -- use if it you don't already!] that loading and saving sessions was actually a significant proportion of our DB hits.
+Recently, we found [through NewRelic -- use if it you don't already!] that
+loading and saving sessions was actually a significant proportion of our DB
+hits.
 
-Sure, we could have just jumped over to using Cache backed sessions, or Redis, or something else.  But we have a need to inspect sessions when they expire, so having that pre-delete hook is perfect for us.
+Sure, we could have just jumped over to using Cache backed sessions, or Redis,
+or something else.  But we have a need to inspect sessions when they expire, so
+having that pre-delete hook is perfect for us.
 
-We found the problem originally stemmed from some middleware that was setting a value on every request.  It didn't need to - once was enough.  However, as we looked further, we realised we didn't need it in the session at all.
+We found the problem originally stemmed from some middleware that was setting a
+value on every request.  It didn't need to - once was enough.  However, as we
+looked further, we realised we didn't need it in the session at all.
 
-Remember - the session data are lazily loaded, and only saved if dirty.  So if you don't access the session, it's not loaded.
+Remember - the session data are lazily loaded, and only saved if dirty.  So if
+you don't access the session, it's not loaded.
 
 ## The solution
 
-Two values we were calculating once and storing on the session -- the visitors country and preferred language -- really could function just as well in cookies, and that would avoid the session noise.
+Two values we were calculating once and storing on the session -- the visitors
+country and preferred language -- really could function just as well in
+cookies, and that would avoid the session noise.
 
-However, cookies aren't _quite_ as simple as sessions, when it comes to middleware.
+However, cookies aren't _quite_ as simple as sessions, when it comes to
+middleware.
 
-You can't set a cookie when all you have is the request -- you need the response object.
+You can't set a cookie when all you have is the request -- you need the
+response object.
 
 ## The pattern
 
+    :::py
     class MyMiddleware(object):
         def process_request(self, request):
             try:

@@ -5,23 +5,33 @@ tags:
   - django
   - mvc
 ---
-Whilst it is theoretically possible, I've yet to see a single server-side web framework that is MVC.
+Whilst it is theoretically possible, I've yet to see a single server-side web
+framework that is MVC.
 
-"Oh, pshaw!", I hear you say, "But {framework of choice} says it is!  So it must be!"
+"Oh, pshaw!", I hear you say, "But {framework of choice} says it is!  So it
+must be!"
 
 Yeah, and MySQL says it's a good DBMS...
 
 ## What is MVC?
 
-MVC - Model / View / Controller - is a design pattern for GUI applications to affect "separation of concerns".  This allows each part of the application to be loosely coupled, improving isolation, and enforcing adherence to interfaces.
+MVC - Model / View / Controller - is a design pattern for GUI applications to
+affect "separation of concerns".  This allows each part of the application to
+be loosely coupled, improving isolation, and enforcing adherence to interfaces.
 
-The Model provides interfaces to the state of the application and whatever data it accesses.
+The Model provides interfaces to the state of the application and whatever data
+it accesses.
 
-The View subscribes to changes in the Model, and presents the information in a meaningful way to the "user".
+The View subscribes to changes in the Model, and presents the information in a
+meaningful way to the "user".
 
-When the user interacts with the View, it sends actions to the Controller, which performs the work, and (in most cases) updates the application state by changing the Model.
+When the user interacts with the View, it sends actions to the Controller,
+which performs the work, and (in most cases) updates the application state by
+changing the Model.
 
-And around it goes.  Model changes state, View updates, etc.  Changes and updates always move in the same direction, and each component is only directly influenced by the previous in the circle.
+And around it goes.  Model changes state, View updates, etc.  Changes and
+updates always move in the same direction, and each component is only directly
+influenced by the previous in the circle.
 
 ## Yeah, so why isn't {my framework} MVC?
 
@@ -45,16 +55,23 @@ All fine so far.
 
 Except, our "view", which is the web browser, is not updated from our model.
 
-The Handler renders a Template using the updated Model state, and passes that to the browser.
+The Handler renders a Template using the updated Model state, and passes that
+to the browser.
 
-It's a subtle but important difference, and this pattern is known as "Model / View / Adapter", or also "Model / View / Mediating Controller", as the "controller" mediates between the View and the Model.
+It's a subtle but important difference, and this pattern is known as "Model /
+View / Adapter", or also "Model / View / Mediating Controller", as the
+"controller" mediates between the View and the Model.
 
-You can read more about it [here](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93adapter)
+You can read more about it
+[here](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93adapter)
 
 ## Aren't you just quibbling?
 
 Well, no, not really (OK, a little bit :).
 
-Firstly, it's important to understand the differences to see why MVC works great on modern JS frameworks.
+Firstly, it's important to understand the differences to see why MVC works
+great on modern JS frameworks.
 
-But also, like the folly and abuse of the "nosql" term (where people mean non-relational), it's causing people to focus on the wrong features of the solution.  The goals of each part of a MVC and MVA system are different.
+But also, like the folly and abuse of the "nosql" term (where people mean
+non-relational), it's causing people to focus on the wrong features of the
+solution.  The goals of each part of a MVC and MVA system are different.

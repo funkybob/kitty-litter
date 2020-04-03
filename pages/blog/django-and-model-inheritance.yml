@@ -3,6 +3,9 @@ content_type: BlogPost
 date: 2013-06-24
 tags:
   - django
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
 I was recently helping someone with the seemingly easy task of getting a list
 of related sub-models.  This was working with a "tree" structure, where the
@@ -16,6 +19,7 @@ given base class instance.  Otherwise, it may behave contrary to expectations.
 
 ## The setup
 
+    :::py
     class Node(models.Model):
         parent = models.ForeignKey('self', null=True, blank=True, related_name="children")
 
@@ -36,6 +40,7 @@ Every sub-class has a OneToOneField to its parent, and, therefore, the parent
 to each child class.  What we're going to do is delve into the Node classes
 meta and find all its relation fields.
 
+    :::py
     sub_classes = [
         rel
         for rel in Node._meta.get_all_related_objects()
@@ -48,6 +53,7 @@ But we need to filter this for:
 
 So we use:
 
+    :::py
     sub_classes = [
         rel
         for rel in Node._meta.get_all_related_objects()
@@ -59,12 +65,14 @@ but we'll come back to this.
 
 Next, we want to get the list of child nodes.
 
+    :::py
     children = self.children.all()
 
 Simple enough.  But to avoid triggering another query on each to fetch its
 sub-class, we want to select_related.  The name of each relation that we need
 is on rel.var_name.
 
+    :::py
     children = self.children.all().select_related(*[rel.var_name for rel in sub_classes])
 
 Once we have this list, we need to find which of the sub-classes actually
@@ -73,6 +81,7 @@ them is not blank.
 
 We could do the obvious solution:
 
+    :::py
     for rel in sub_classes:
         try:
             schild = getattr(child, rel.var_name, None)
@@ -85,6 +94,7 @@ However, there is an easier [though dirtier] solution.  When we select_related,
 the related objects are hidden away on the Model instance.  The name of the
 attribute for that is given by rel.get_cache_name().
 
+    :::py
     for rel in sub_classes:
         schild = child.__dict__.get(rel.get_cache_name())
         if schild is not None:
@@ -93,6 +103,7 @@ attribute for that is given by rel.get_cache_name().
 Now, moving all of our work outside the inner loops, we can get the cache name
 and var_name in the one loop.
 
+    :::py
     # Build a map of (rel field -> cache attribute name) for each sub-class
     sub_classes = dict(
         (rel.var_name, rel.get_cache_name())
@@ -113,6 +124,7 @@ and var_name in the one loop.
 Now, this will construct a list and return it.  If you expect the children list
 to be large, you could just as easily yield each child as you go.
 
+    :::py
     for child in self.children.select_related(*sub_classes.keys()):
         for sub in sub_classes.values():
             sub_child = child.__dict__.get(sub)

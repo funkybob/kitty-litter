@@ -7,20 +7,27 @@ tags:
   - django
   - forms
   - python
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
 
-So, I saw a post recently about [Build an API under 30 lines of code](https://impythonist.wordpress.com/2015/07/12/build-an-api-under-30-lines-of-code-with-python-and-flask/) using Flask.
+So, I saw a post recently about [Build an API under 30 lines of
+code](https://impythonist.wordpress.com/2015/07/12/build-an-api-under-30-lines-of-code-with-python-and-flask/)
+using Flask.
 
 I started wondering what it would take to do the same in Django.
 
 The two main tools we're going go use are `JsonResponse` and `ModelForm`.
 
-`JsonResponse` is a sub-class of `HttpResponse` that JSON encodes the data you pass it.
+`JsonResponse` is a sub-class of `HttpResponse` that JSON encodes the data you
+pass it.
 
 And the `ModelForm` has a way to pull field values from a model instance.
 
 So... let's create a project:
 
+    :::sh
     $ virtualenv -p python3 env
     $ . env/bin/activate
     $ pip install Django
@@ -33,6 +40,7 @@ Add our project as an app, by adding "salary", to `INSTALLED_APPS`.
 
 Into ``salary/models.py`` put:
 
+    :::py
     from django.db import models
 
 
@@ -44,6 +52,7 @@ Into ``salary/models.py`` put:
 
 And create the migration:
 
+    :::sh
     $ python manage.py makemigrations salary
     $ python manage.py migrate
 
@@ -51,6 +60,7 @@ And create the migration:
 
 Into ``salary/forms.py`` put:
 
+    :::py
     from django import forms
 
     from .models import Salary
@@ -73,6 +83,7 @@ Next, we need to start providing some views.
 
 So let's create ``salary/views.py``:
 
+    :::py
     from django.http import JsonResponse
     from django.views.generic import ListView, DetailView
 
@@ -136,6 +147,7 @@ So let's create ``salary/views.py``:
 
 And finally, update our ``salary/urls.py``:
 
+    :::py
     from django.conf.urls import url
     from django.views.decorators.csrf import csrf_exempt
 
@@ -151,8 +163,10 @@ And finally, update our ``salary/urls.py``:
 
 Now an import script to bring the CSV records.
 
-We create ``import.py`` which is just a simple loop using `csv.DictReader` and our `ModelForm`.
+We create ``import.py`` which is just a simple loop using `csv.DictReader` and
+our `ModelForm`.
 
+    :::py
     import sys
 
     from csv import DictReader
@@ -186,6 +200,7 @@ We create ``import.py`` which is just a simple loop using `csv.DictReader` and o
 
 Now import the data:
 
+    :::sh
     $ python import.py Current_Employee_Names__Salaries__and_Position_Titles.csv
 
 # Result
@@ -197,10 +212,12 @@ Now import the data:
        8 salary/models.py
       91 total
 
-So, it's a few more than 30 lines, but it also uses _only_ django -- **no** 3rd party apps.
+So, it's a few more than 30 lines, but it also uses _only_ django -- **no** 3rd
+party apps.
 
 A GET to '/' returns a list looking like:
 
+    :::json
     [
       {
         "salary": "90744.00",
@@ -221,6 +238,7 @@ A GET to '/' returns a list looking like:
 
 You can POST to that URL to create a new record, with helpful error messages:
 
+    :::json
     {
       "salary": [
         "This field is required."
@@ -235,6 +253,7 @@ You can POST to that URL to create a new record, with helpful error messages:
 
 A GET to /(pk)/ will yield a single record:
 
+    :::json
     {
       "salary": "90744.00",
       "department": "WATER MGMNT",
@@ -243,6 +262,9 @@ A GET to /(pk)/ will yield a single record:
       "id": 1
     }
 
-And POSTing to that same URL can update the record.  The `__init__` method in the form ensures all fields are optional.
+And POSTing to that same URL can update the record.  The `__init__` method in
+the form ensures all fields are optional.
 
-I would have preferred to use PUT to update, but it's actually not so easy to get Django to parse a POST body on a PUT request because, technically, it can't assume one.
+I would have preferred to use PUT to update, but it's actually not so easy to
+get Django to parse a POST body on a PUT request because, technically, it can't
+assume one.

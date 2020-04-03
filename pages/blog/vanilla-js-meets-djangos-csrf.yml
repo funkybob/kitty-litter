@@ -5,17 +5,28 @@ tags:
   - csrf
   - django
   - javascript
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
-I was recently helping someone who was trying to learn about building web sites, and was trying to avoid learning too many things at once, so opted to avoid JS libraries for now.
+I was recently helping someone who was trying to learn about building web
+sites, and was trying to avoid learning too many things at once, so opted to
+avoid JS libraries for now.
 
-As the discussion progressed, they ran into Django's [Cross Site Request Forgery protection](https://docs.djangoproject.com/en/1.8/ref/csrf/) which stumped them.
+As the discussion progressed, they ran into Django's [Cross Site Request
+Forgery protection](https://docs.djangoproject.com/en/1.8/ref/csrf/) which
+stumped them.
 
-So, as I was about to link them to the part of the docs that shows how to add the CSRF token from the cookie to your headers, I realised it all assumes you're using jQuery.
+So, as I was about to link them to the part of the docs that shows how to add
+the CSRF token from the cookie to your headers, I realised it all assumes
+you're using jQuery.
 
-Now, that wasn't a bad assumption at the time, but it wasn't viable for this discussion.  So I decided to put my hand to writing a vanilla JS solution.
+Now, that wasn't a bad assumption at the time, but it wasn't viable for this
+discussion.  So I decided to put my hand to writing a vanilla JS solution.
 
 First step: get the CSRF token cookie.
 
+    :::js
     //
     // Find the CSRF Token cookie value
     //
@@ -45,6 +56,7 @@ This code is using "modern" JS features like Array.forEach, and String.trim.
 
 It only needs to be run once per page load, in theory;
 
+    :::js
     //
     // SEND THE FORM!
     //
@@ -54,8 +66,10 @@ It only needs to be run once per page load, in theory;
     var formElement = document.querySelector("#myform");
     request.send(new FormData(formElement));
 
-This is almost cut'n'pasted from the Mozilla's sample XML usage, but we include setRequestHeader to add the  X-CSRFToken header.
+This is almost cut'n'pasted from the Mozilla's sample XML usage, but we include
+setRequestHeader to add the  X-CSRFToken header.
 
-Then we use the new FormData API to serialise all the fields in our field element, and post them.
+Then we use the new FormData API to serialise all the fields in our field
+element, and post them.
 
 Please post comments on any browsers this does or does not work in!

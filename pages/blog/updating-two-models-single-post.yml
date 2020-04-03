@@ -5,6 +5,9 @@ tags:
   - django
   - forms
   - python
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
 This comes up a lot in #django ... and the solution is [as many are with
 Django] much simpler than people assume.
@@ -24,6 +27,7 @@ true; it uses multiple forms from the one submission.
 
 Firstly, the forms don't need to be anything special, but for one point:
 
+    :::py
     class UserForm(models.ModelForm):
         model = models.User
         fields = [...]
@@ -41,6 +45,7 @@ We omit the `user` field so the `ProfileForm` won't show a drop-down list of
 So, as a simple example, here's a view that updates a User and their Profile in
 one view:
 
+    :::py
     def user_edit(request):
 
         if request.method == 'POST':
@@ -88,6 +93,7 @@ to *create* two related models?
 
 Fortunately, the answer turns out to be almost as simple:
 
+    :::py
     def user_create(request):
 
         if request.method == 'POST':

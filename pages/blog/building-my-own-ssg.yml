@@ -3,6 +3,9 @@ date: 2019-06-01
 content_type: BlogPost
 tags:
   - python
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
 
 Anyone who's been following my blog may have noticed it recently moved home,
@@ -102,6 +105,7 @@ schema class created for the project. It uses python3 type annotations to allow
 you to declare attributes and their acceptable types, which will be validated
 on instantiation.
 
+    :::py
     from datetime import datetime
     from gilbert.content import Content
 
@@ -130,6 +134,7 @@ select content using a basic query language.
 For instance, on this site I use a sub-class of Collection to build a list of
 blog posts.
 
+    :::yaml
     all:
       - eq:
         - attr: ["content_type"]

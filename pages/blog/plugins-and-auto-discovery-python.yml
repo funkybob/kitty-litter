@@ -3,6 +3,9 @@ date: 2019-03-20
 content_type: BlogPost
 tags:
  - python
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
 Whilst working on my toy static site generator
 [gilbert](https://github.com/funkybob/gilbert), I decided I wanted it to use a
@@ -35,6 +38,7 @@ For this, we're going to use the namespace `gilbert.plugins`.
 Next, we iterate over the `__path__` list, and import all the packages and
 modules we can find.
 
+    :::py
     from importlib import import_module
     from pathlib import Path
 
@@ -85,7 +89,7 @@ Once again, modern Python comes to the rescue. As of Python 3.6, thanks to
 `__init_subclass__` method that is invoked whenever a sub-class of our class
 is defined.
 
-
+    :::py
     class BaseThing:
         _registry = {}
 
@@ -110,6 +114,7 @@ other aspects of your registration?
 Thanks to the new syntax in Python 3, we can pass keyword arguments in the
 class statement:
 
+    :::py
     class MyThing(BaseThing, name='SuperThing'):
         ...
 
@@ -118,6 +123,7 @@ This means in the `kwargs` passed to `BaseThing.__init_subclass__` will be a `na
 It's advisable to specifically list the keyword arguments your class uses, so
 Python removes them from `kwargs`:
 
+    :::py
         def __init_subclass__(cls, *, name=None, **kwargs):
             super().__init_subclass__(cls, **kwargs)
             if name is None:
@@ -140,12 +146,14 @@ So now to write a plugin for `gilbert`, you would layout your git repo something
 
 Your `setup.py` can be the bare minimum:
 
+    :::py
     from setuptools import setup
 
     setup()
 
 Then your `setup.cfg` would look something like:
 
+    :::ini
     [metadata]
     name = gilbert-mything
     version = 0.0.1

@@ -4,14 +4,20 @@ date: 2017-05-11
 tags:
   - code
   - pony
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
-I've recently started teaching myself an interesting language I discovered on the LLVM project page : [Pony](http://ponylang.org)
+I've recently started teaching myself an interesting language I discovered on
+the LLVM project page : [Pony](http://ponylang.org)
 
 # Projects
 
-First, I tried rewriting [keyster](https://github.com/funkybob/keyster) - a simple Key/Value store that talks over UDP.
+First, I tried rewriting [keyster](https://github.com/funkybob/keyster) - a
+simple Key/Value store that talks over UDP.
 
-This took a tiny 44 lines, and produced something almost as fast as the raw C verison.
+This took a tiny 44 lines, and produced something almost as fast as the raw C
+verison.
 
     use "collections"
     use "logger"
@@ -59,12 +65,20 @@ This took a tiny 44 lines, and produced something almost as fast as the raw C ve
           let socket = UDPSocket(env.root as AmbientAuth, HandleUDPNotify, "", "6347")
         end
 
-Now, to anyone familiar with various programming languages, a lot of this will look quite familiar.  What may stand our as odd, though, is constructs such as "consume", "recover", and the annotations like "iso", "ref", "var".  These are to do with rcaps.
+Now, to anyone familiar with various programming languages, a lot of this will
+look quite familiar.  What may stand our as odd, though, is constructs such as
+"consume", "recover", and the annotations like "iso", "ref", "var".  These are
+to do with rcaps.
 
-So far the most frustrating part to learn is the [Reference Capabilities](https://tutorial.ponylang.org/capabilities/reference-capabilities.html) or "rcaps".  These tell the compiler what access to allow to each variable : mutable, immutable, shareable, and so on...
+So far the most frustrating part to learn is the [Reference
+Capabilities](https://tutorial.ponylang.org/capabilities/reference-capabilities.html)
+or "rcaps".  These tell the compiler what access to allow to each variable :
+mutable, immutable, shareable, and so on...
 
-That said, they also allow it to detect dangerous behaviours, and run the actor system completely lock free.
+That said, they also allow it to detect dangerous behaviours, and run the actor
+system completely lock free.
 
-Is this frustration worth the guarantee that "if it compiles, it won't crash", as well as "guaranteed deadlock free"?
+Is this frustration worth the guarantee that "if it compiles, it won't crash",
+as well as "guaranteed deadlock free"?
 
 Well, that remains to be seen, but so far it's very, very promising.

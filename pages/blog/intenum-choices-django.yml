@@ -5,11 +5,15 @@ tags:
   - django
   - enum
   - python
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
 So, we've all needed a `choices` list in Django at one time or another, right?
 
 And from the docs we see the example code:
 
+    :::py
     YEAR_IN_SCHOOL_CHOICES = (
         ('FR', 'Freshman'),
         ('SO', 'Sophomore'),
@@ -19,6 +23,7 @@ And from the docs we see the example code:
 
 Which is then quickly amended to:
 
+    :::py
     class Student(models.Model):
         FRESHMAN = 'FR'
         SOPHOMORE = 'SO'
@@ -34,24 +39,36 @@ Which is then quickly amended to:
                                           choices=YEAR_IN_SCHOOL_CHOICES,
                                           default=FRESHMAN)
 
-Why?  Because this avoids the problem of `magic values`, an aspect of keeping DRY.
+Why?  Because this avoids the problem of `magic values`, an aspect of keeping
+DRY.
 
-Magic values are constants that have meaning; they become a problem [especially with numbers] because you can't be certain if the values are coincidentally the same (i.e. this value is the 2px margin we want in common, but that one just happens to _also_ be 2px...).  Much better to give them names, so we can know what the value represents, and know it's not coincidentally the same as another value.
+Magic values are constants that have meaning; they become a problem [especially
+with numbers] because you can't be certain if the values are coincidentally the
+same (i.e. this value is the 2px margin we want in common, but that one just
+happens to _also_ be 2px...).  Much better to give them names, so we can know
+what the value represents, and know it's not coincidentally the same as another
+value.
 
 It also means changing the value throughout your code can happen in once place.
 
-Now the values are defined in one place, and easy to access.  Instead of having to remember to use 'JR', you can put Student.JUNIOR ; namespacing is thrown in free!
+Now the values are defined in one place, and easy to access.  Instead of having
+to remember to use 'JR', you can put Student.JUNIOR ; namespacing is thrown in
+free!
 
-What's wrong with this?  Well, nothing, really... except when you have multiple choice fields on the same model.
+What's wrong with this?  Well, nothing, really... except when you have multiple
+choice fields on the same model.
 
 ## A possible solution...
 
-As of Python 3.4, we have the [enum](https://docs.python.org/3/library/enum.html) lib.  For older Python's, there's the `Enum34` package.
+As of Python 3.4, we have the
+[enum](https://docs.python.org/3/library/enum.html) lib.  For older Python's,
+there's the `Enum34` package.
 
 This gives us the use `Enum` and `IntEnum` classes.
 
 The above example could be rewritten as:
 
+    :::py
     class Student(models.Model):
         class YEAR(Enum):
             FRESHMAN = 'FR'
@@ -61,33 +78,39 @@ The above example could be rewritten as:
 
 Now we can reference the values using Student.YEAR.JUNIOR.  Not bad.
 
+    :::py
     >>> Student.YEAR.JUNIOR
     <YEAR.JUNIOR: 'JR'>
 
 Each values provides its name and value as attributes:
 
+    :::py
     >>> Student.YEAR.JUNIOR.name
     'JUNIOR'
     >>> Student.YEAR.JUNIOR.value
     'JR'
 
-This helps us with our last step: to provide this in a way `choices=` will accept.
+This helps us with our last step: to provide this in a way `choices=` will
+accept.
 
 Fortunately, Enum _classes_ are iterable:
 
+    :::py
     >>> list(Student.YEAR)
     [<YEAR.FRESHMAN: 'FR'>, <YEAR.SOHPOMORE: 'SO'>, <YEAR.JUNIOR: 'JR'>, <YEAR.SENIOR: 'SR'>]
 
 So we can build choices by just:
 
-        year_in_school = models.CharField(max_length=2,
-                                              choices=((x.value, x.name.title()) for x in YEAR),
-                                              default=FRESHMAN)
+    :::py
+    year_in_school = models.CharField(max_length=2,
+                                            choices=((x.value, x.name.title()) for x in YEAR),
+                                            default=FRESHMAN)
 
 ## IntEnum
 
 When your values are all integers, there's `IntEnum`.
 
+    :::py
     class STATE(IntEnum):
         CANCELLED = -1
         PENDING = 0
@@ -98,8 +121,10 @@ This provides the same thing, but guarantees the values are integers.
 
 ## Belt and braces
 
-Finally, just to protect us from us... there's the `enum.unique` decorator.  This helps ensure that no two names have the same value.
+Finally, just to protect us from us... there's the `enum.unique` decorator.
+This helps ensure that no two names have the same value.
 
+    :::py
     @enum.unique
     class STATE(enum.IntEnum):
         CANCELLED = -1

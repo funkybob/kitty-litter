@@ -5,42 +5,61 @@ tags:
   - code
   - django
   - python
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
-Some years ago, I adapted the work of a coworker and released it as ``django-classy-settings``, a way to define Django settings using a class, allowing a clean and easy way to derive local / production settings from a common base, and opening the way to allowing composition, too.
+Some years ago, I adapted the work of a coworker and released it as
+``django-classy-settings``, a way to define Django settings using a class,
+allowing a clean and easy way to derive local / production settings from a
+common base, and opening the way to allowing composition, too.
 
-Recently I was faced with a similar problem at my current job, though not using Django this time.
+Recently I was faced with a similar problem at my current job, though not using
+Django this time.
 
-Another big difference is my current job is using Python3.6 (and eager to move to 3.7 ASAP), opening other opportunities.
+Another big difference is my current job is using Python3.6 (and eager to move
+to 3.7 ASAP), opening other opportunities.
 
 ## Setting the scene
 
-They already had a config module that pulled values from the environment [for most of them], and pushed them through helper functions for casting types [like bools, ints, etc]
+They already had a config module that pulled values from the environment [for
+most of them], and pushed them through helper functions for casting types [like
+bools, ints, etc]
 
 This would look something like:
 
+    :::py
     USE_MAGIC = parse_bool(os.getenv('USE_MAGIC', False))
 
     DATABASE_NAME = os.getenv('DATABASE_NAME', 'production-database-1')
     DATABASE_PORT = int(os.getenv('DATABASE_PORT', 5432))
 
-However, there were 2 projects sharing a common base, the base having its required settings, and the two others needing their own additional settings.
+However, there were 2 projects sharing a common base, the base having its
+required settings, and the two others needing their own additional settings.
 
-Anyone who's been at this game long enough knows what happened next: they diverged. The helper functions weren't shared, the settings value defaults weren't in sync, etc.
+Anyone who's been at this game long enough knows what happened next: they
+diverged. The helper functions weren't shared, the settings value defaults
+weren't in sync, etc.
 
 ## The "obvious" solution
 
-So, the first idea was, simply, to move the shared settings into the base project, along with the helper functions.
+So, the first idea was, simply, to move the shared settings into the base
+project, along with the helper functions.
 
-This would work, and avoid most of the problems, but still leaves writing and reading the config to be somewhat laborious.
+This would work, and avoid most of the problems, but still leaves writing and
+reading the config to be somewhat laborious.
 
 ## The game plan
 
-So when it comes down to it, what we have is a list of names, types, and defaults.
+So when it comes down to it, what we have is a list of names, types, and
+defaults.
 
-We could write this as a list of tuples describing each, but there's a more Pythonic approach: type annotations.
+We could write this as a list of tuples describing each, but there's a more
+Pythonic approach: type annotations.
 
 Imagine if we could rewrite the above example as:
 
+    :::py
     class Config:
         USE_MAGIC: bool = False
         DATABASE_NAME = 'testing-database-1'
@@ -50,10 +69,13 @@ Wouldn't that be easy, and clear?
 
 ## Enter `confucius`
 
-So after a say of playing about [and some very welcome discussion and help from the people on Freenode IRC #python ] I wrote and published [confucius](https://pypi.org/project/confucius/).
+So after a say of playing about [and some very welcome discussion and help from
+the people on Freenode IRC #python ] I wrote and published
+[confucius](https://pypi.org/project/confucius/).
 
 The above code becomes:
 
+    :::py
     from confucius import BaseConfig
 
     class Config(BaseConfig):
@@ -61,32 +83,41 @@ The above code becomes:
         DATABASE_NAME = 'testing-database-1'
         DATABASE_PORT: int = 5432
 
-Accessing any of these attributes of the class will cause a lookup in `os.getenv`, falling back to the default.  The resulting value is then passed to the "type".
+Accessing any of these attributes of the class will cause a lookup in
+`os.getenv`, falling back to the default.  The resulting value is then passed
+to the "type".
 
-Then the rest of my code can access the Config singleton ( **gasp** did he say _singleton_ ? In Python?? )
+Then the rest of my code can access the Config singleton ( **gasp** did he say
+_singleton_ ? In Python?? )
 
+    :::py
     from config import Config
 
     db = connection(Config.DATABASE_NAME, port=Config.DATABASE_PORT)
 
 ## Derived values
 
-I'm not yet 100% happy with this step, but it's still clean.  You can have values dependent on others:
+I'm not yet 100% happy with this step, but it's still clean.  You can have
+values dependent on others:
 
+    :::py
     class Config(BaseConfig):
         USE_MAGIC: bool = False
 
         def WIBBLE(self) -> int:
             return 1234 if self.USE_MAGIC else 4321
 
-Not that to access ``Config.WIBBLE`` you treat it like an attribute, no need to call it.
+Not that to access ``Config.WIBBLE`` you treat it like an attribute, no need to
+call it.
 
 ### And that's it?
 
 Well, no, there's more!
 
-A system that's not extensible is no fun.  So, you can register your own type parsers!
+A system that's not extensible is no fun.  So, you can register your own type
+parsers!
 
+    :::py
     import json
 
     class Config(BaseConfig):
@@ -96,14 +127,17 @@ A system that's not extensible is no fun.  So, you can register your own type pa
 
         DATABASES: json = {'default': {'NAME': 'dummy', 'ENGINE': 'sqlite'}}
 
-The ``__types__`` dict will be merged with those of all parent classes [in MRO order] so you don't have to worry about redefining anything.
+The ``__types__`` dict will be merged with those of all parent classes [in MRO
+order] so you don't have to worry about redefining anything.
 
 ## But wait, there's one more thing!
 
-As a concession to how ``django-classy-settings`` worked, the class also provides an ``as_dict`` method to get all the attributes and values at once.
+As a concession to how ``django-classy-settings`` worked, the class also
+provides an ``as_dict`` method to get all the attributes and values at once.
 
 You can then use this in your django settings module:
 
+    :::py
     import os
 
     class Settings(BaseConfig):

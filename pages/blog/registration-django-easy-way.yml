@@ -6,15 +6,21 @@ tags:
   - django
   - forms
   - registration
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
-Every so often (quite frequently, actually) you'll get someone in #django begging for help trying to integrate some app that promises the world ... at least, as far as it concerns user registration and profiles.
+Every so often (quite frequently, actually) you'll get someone in #django
+begging for help trying to integrate some app that promises the world ... at
+least, as far as it concerns user registration and profiles.
 
 > Update:
 > A couple of people pointed out the original version would end up requiring the user to enter their email twice.
 > I've now amended the code so the password_reset view's work is now done in the registration CreateView.
 > This makes the view a little more complicated, but the URLs and user workflow much simpler.
 
-The thing is, now that we have custom User models, doing this is easier than ever before - yes, even including email verification.
+The thing is, now that we have custom User models, doing this is easier than
+ever before - yes, even including email verification.
 
 The following are my steps for creating a site where you can:
 
@@ -24,12 +30,15 @@ The following are my steps for creating a site where you can:
 
 ## Step 1: User model
 
-We follow the steps [here](https://docs.djangoproject.com/en/1.7/topics/auth/customizing/#substituting-a-custom-user-model)
+We follow the steps
+[here](https://docs.djangoproject.com/en/1.7/topics/auth/customizing/#substituting-a-custom-user-model)
 
 We'll start an app called 'accounts' by running `manage.py startapp accounts`
 
-Then we'll create a User model in there, which inherits from AbstractBaseUser and PermissionsMixin.
+Then we'll create a User model in there, which inherits from AbstractBaseUser
+and PermissionsMixin.
 
+    :::py
     from django.db import models
     from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
@@ -46,14 +55,19 @@ Then we'll create a User model in there, which inherits from AbstractBaseUser an
         def get_short_name(self):
             return self.email
 
-Add to this whatever other fields you record against all your users - name, avatar image, what have you.
+Add to this whatever other fields you record against all your users - name,
+avatar image, what have you.
 
-Why AbstractBaseUser, and not AbstractUser?  Simple - the latter implements the default Django user model, and we don't want that.  Notably, it includes 'username' as unique, and 'email' as not.
+Why AbstractBaseUser, and not AbstractUser?  Simple - the latter implements the
+default Django user model, and we don't want that.  Notably, it includes
+'username' as unique, and 'email' as not.
 
-PermissionsMixin gives us `is_superuser`, `groups` and `user_permissions`, as well as the right methods to participate in the normal permissions machinery.
+PermissionsMixin gives us `is_superuser`, `groups` and `user_permissions`, as
+well as the right methods to participate in the normal permissions machinery.
 
 Now we also need to add a custom Manager to help the rest of Django.
 
+    :::py
     from django.contrib.auth.models import BaseUserManager
 
 
@@ -81,26 +95,31 @@ Now we also need to add a custom Manager to help the rest of Django.
             user.save(using=self._db)
             return user
 
-You may be wondering what "normalize_email" does?  That lower-cases the host name of the email address (everything right of the @) to avoid case clashes.
+You may be wondering what "normalize_email" does?  That lower-cases the host
+name of the email address (everything right of the @) to avoid case clashes.
 
 And we tell our User model to use this by adding:
 
+    :::py
     objects = UserManager()
 
 to your User model.
 
 Finally, set `AUTH_USER_MODEL` in your settings.py
 
+    :::py
     AUTH_USER_MODEL = "accounts.User"
 
 ## 2. Registration
 
-Registration is as simple as adding a `CreateView` on your site that creates a new User instance.
+Registration is as simple as adding a `CreateView` on your site that creates a
+new User instance.
 
 Make sure, however, that you only present fields you want editable.
 
 So, in accounts/forms.py
 
+    :::py
     from django import forms
     from .models import User
 
@@ -113,12 +132,17 @@ So, in accounts/forms.py
 
 Notice we don't put the password here.  This is where the clever part comes.
 
-Instead of creating all our own code to manage sending the email and verifying the token, we can re-use the [existing password reset machinery](https://docs.djangoproject.com/en/1.7/topics/auth/default/#django.contrib.auth.views.password_reset) that's built into Django!
+Instead of creating all our own code to manage sending the email and verifying
+the token, we can re-use the [existing password reset
+machinery](https://docs.djangoproject.com/en/1.7/topics/auth/default/#django.contrib.auth.views.password_reset)
+that's built into Django!
 
-We just need to hook in the existing views, and tweak them to use different templates.
+We just need to hook in the existing views, and tweak them to use different
+templates.
 
 Add our registration view to accounts/views.py:
 
+    :::py
     from django.contrib.auth.forms import PasswordResetForm
     from django.shortcuts import redirect
     from django.views.generic import CreateView
@@ -154,12 +178,16 @@ Add our registration view to accounts/views.py:
 
             return redirect(self.get_success_url())
 
-This view is replicating some of the work from django.contrib.auth.views.password_reset, because the PasswordResetForm will send the email to the user for us.
+This view is replicating some of the work from
+django.contrib.auth.views.password_reset, because the PasswordResetForm will
+send the email to the user for us.
 
-Here we must set a random password, as without one the Password Reset view will not send emails, as of Django 1.6.
+Here we must set a random password, as without one the Password Reset view will
+not send emails, as of Django 1.6.
 
 Now create your accounts/urls.py :
 
+    :::py
     from django.conf.urls import url
 
     from .views import RegistrationView
@@ -180,12 +208,18 @@ Now create your accounts/urls.py :
         }, name='register-complete'),
     ]
 
-Some of you may not be familiar with the 3rd positional argument to url().  It was in much more common usage before the advent of Class-Based Generic Views.  Before that, generic views were configured by passing a lot of arguments to them, and this can be done for any view by passing a dict of arguments to url().
+Some of you may not be familiar with the 3rd positional argument to url().  It
+was in much more common usage before the advent of Class-Based Generic Views.
+Before that, generic views were configured by passing a lot of arguments to
+them, and this can be done for any view by passing a dict of arguments to
+url().
 
-So in this case I've overridden the templates to use, and where to redirect on complete.
+So in this case I've overridden the templates to use, and where to redirect on
+complete.
 
 Finally, hook these URLs into your root urls.py
 
+    :::py
     urlpatterns = patterns('',
         ...
         url(r'^accounts/', include('accounts.urls', namespace='accounts')),
@@ -193,6 +227,8 @@ Finally, hook these URLs into your root urls.py
 
 ## 3. Profile views.
 
-Honestly, these are just standard DetailView and EditView classes.  Nothing special at all.
+Honestly, these are just standard DetailView and EditView classes.  Nothing
+special at all.
 
-Just remember to only include fields the user should be able to change -- i.e. NOT is_superuser :)
+Just remember to only include fields the user should be able to change -- i.e.
+NOT is_superuser :)

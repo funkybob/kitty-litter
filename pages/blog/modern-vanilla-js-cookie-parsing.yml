@@ -5,15 +5,23 @@ tags:
   - csrf
   - django
   - javascript
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
-In a [previous post](/blog/2015/aug/28/vanilla-js-meets-djangos-csrf/) I wrote a Vanilla JS function for parsing all the current cookies. Since then a couple of things have happened:
+In a [previous post](/blog/2015/aug/28/vanilla-js-meets-djangos-csrf/) I wrote
+a Vanilla JS function for parsing all the current cookies. Since then a couple
+of things have happened:
 
 1. I realised it was not safe
 2. JS in browsers got better [and I got better at it]
 
-It was not safe in as much as it parsed the cookie value once and retained the value. If you were, for instance,  using a SPA, Django might update the CSRF token at any point, making your value stale.  So instead, I've updated the function to get just one value, and perform parsing on each call.
+It was not safe in as much as it parsed the cookie value once and retained the
+value. If you were, for instance,  using a SPA, Django might update the CSRF
+token at any point, making your value stale.  So instead, I've updated the
+function to get just one value, and perform parsing on each call.
 
-
+    :::js
     function getCookie (name) {
       let value;
 
@@ -28,13 +36,19 @@ It was not safe in as much as it parsed the cookie value once and retained the v
       return value;
     }
 
-So the process is much the same. We declare a value which defaults to undefined. This way, if we don't find a matching cookie, our value falls out the bottom as undefined.
+So the process is much the same. We declare a value which defaults to
+undefined. This way, if we don't find a matching cookie, our value falls out
+the bottom as undefined.
 
 Then we get the document's cookie attribute, or fall back to an empty string.
 
-Next, we split on ';', and for each resulting string we trim whitespace, and apply our regex.
+Next, we split on ';', and for each resulting string we trim whitespace, and
+apply our regex.
 
-This results in an Array of (match, key, value) values. We iterate over them, using the JS "spread" feature to unpack the values into separate variables, and test if (a) the Match succeeded ('m' is not undefined), and (b) the key matches the name we've been asked to find.
+This results in an Array of (match, key, value) values. We iterate over them,
+using the JS "spread" feature to unpack the values into separate variables, and
+test if (a) the Match succeeded ('m' is not undefined), and (b) the key matches
+the name we've been asked to find.
 
 If it matches, we assign the value to our 'value' variable.
 
@@ -42,6 +56,7 @@ If it matches, we assign the value to our 'value' variable.
 
 If absolute performance is your schtick... try this:
 
+    :::js
     function getCookie (name) {
       for(let c of (document.cookie || '').split(';')) {
         let [m, k, v] = c.trim().match(/(\w+)=(.*)/)
