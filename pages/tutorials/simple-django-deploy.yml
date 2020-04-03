@@ -495,7 +495,7 @@ Now let's add our uWSGI config.  Into `/etc/uwsgi/apps-available/mysite.ini` put
     ; Add this dir to PYTHONPATH so Python can find our code
     pythonpath = code/
     ; The WSGI module to load
-    # remember to update this to your project's name!
+    # remember to replace "mysite" with project's name!
     module = mysite.wsgi
 
     # Don't load the app in the Master - saves memory in quiet times
