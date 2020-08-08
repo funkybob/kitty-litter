@@ -505,4 +505,7 @@ Load it in your page, and initialise it with:
 
     :::js
 
-    const mgr = new FormSetManager()
+    const el = document.querySelector('form');
+    const mgr = new FormSetManager(el, '');
+
+Adjust the selector and previx as appropriate.
