@@ -1,0 +1,508 @@
+title: Dynamic formsets with Django
+content_type: BlogPost
+date: 2020-04-02
+tags:
+  - django
+  - formsets
+  - forms
+  - WIP
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
+---
+
+<blockquote>
+<strong>Note:</strong> This post is still a Work In Progress.
+
+I am posting it now to help people with what I have, and seek feedback and furter input.
+</blockquote>
+
+
+Recently a few people have been asking about managing dymanic numbers of
+[FormSets](https://docs.djangoproject.com/en/3.0/topics/forms/formsets/) in
+Django.
+
+When we look at how Admin handles inlines we seee Django can handle this already.
+
+But how does it work? And how can _you_ take advantage of this power?
+
+## The Setup
+
+So, I'm going to start with a simple Pizza order form that lets you pick a
+Pizza type, and select extra toppings.
+
+    :::console
+    $ django-admin startproject shop
+    $ cd shop/
+    $ ./manage.py startapp order
+
+Now we edit `shop/settings.py` to add `"order"` to our `INSTALLED_APPS`
+
+    :::py
+    INSTALLED_APPS = [
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'order',
+    ]
+
+Next we create our models in `order/models.py`
+
+    :::py
+    from django.db import models
+
+    class Topping(models.Model):
+        name = models.CharField(max_length=100, unique=True)
+        description = models.TextField(blank=True)
+
+        def __str__(self):
+            return self.name
+
+
+    class Pizza(models.Model):
+        name = models.CharField(max_length=100, unique=True)
+        description = models.TextField(blank=True)
+
+        toppings = models.ManyToManyField(Topping, blank=True)
+
+        def __str__(self):
+            return self.name
+
+
+    class Order(models.Model):
+        pizza = models.ForeignKey(Pizza, on_delete=models.CASCADE)
+        extras = models.ManyToManyField(Topping, blank=True)
+
+        def __str__(self):
+            return f'{self.pizza} + {self.extras.values_list("name", flat=True)}'
+
+
+This is just a toy project, so we won't get too fancy.
+
+## The formset
+
+Next comes a simple Model Formset for our Pizzas. This will go into
+`orders/forms.py`
+
+    :::py
+    from django import forms
+
+    from . import models
+
+
+    OrderFormSet = forms.modelformset_factory(models.Order, fields={'pizza', 'extras'})
+
+
+## The order view
+
+Into our `orders/views.py` we'll add a simple view to display our order form.
+
+    :::py
+    from django.shortcuts import render, redirect
+      
+    from .forms import OrderFormSet
+
+
+    def order(request):
+        if request.method == 'POST':
+            formset = OrderFormSet(request.POST)
+
+            if formset.is_valid():
+                # Process formset here
+                return redirect('/')
+        else:
+            formset = OrderFormSet()
+
+        return render(request, 'order.html', {'formset': formset})
+
+We won't get to handling the valid form just yet, as that's not the goal of
+this tutorial.
+
+## Urls.
+
+Finally, we wire in our URLs in our root URLs, `shop/urls.py`
+
+    :::py
+    from django.contrib import admin
+    from django.urls import path
+    from django.views.generic import TemplateView
+
+    from order import views
+
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('/', TemplateView.as_view(template_name='home.html')),
+        path('order/', views.order),
+    ]
+
+## Templates
+
+We'll just create some basic placeholder templates in `order/templates/`
+
+First is `order/templates/base.html`
+
+    :::html
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title> Pizza! </title>
+      </head>
+      <body>
+    {% block content %}{% endblock %}
+      </body>
+    </html>
+
+Next, our home page in `orders/templates/home.html`
+
+    :::html
+    {% extends "base.html" %}
+      
+    {% block content %}
+
+    <a href="/order"> Order ! </a>
+
+    {% endblock %}
+
+And finally, our order page in `orders/templates/order.html`
+
+    :::html
+    {% extends "base.html" %}
+      
+    {% block content %}
+
+    <form method="POST" action=".">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {% for form in formset %}
+    <fieldset> {{ form.as_p }} </fieldset>
+    {% endfor %}
+    <button type="submit"> Order </button>
+    </form>
+
+    {% endblock %}
+
+Here I'm rendering each form separately, and that requires I also explicitly
+render the [management
+form](https://docs.djangoproject.com/en/3.0/topics/forms/formsets/#understanding-the-managementform).
+
+This will become important later.
+
+
+## Migrations
+
+    :::console
+    $ ./manage.py makemigrations
+    Migrations for 'order':
+      order/migrations/0001_initial.py
+        - Create model Topping
+        - Create model Pizza
+        - Create model Order
+
+    $ ./manage.py migrate
+    Operations to perform:
+      Apply all migrations: admin, auth, contenttypes, order, sessions
+    Running migrations:
+      Applying contenttypes.0001_initial... OK
+      Applying auth.0001_initial... OK
+      Applying admin.0001_initial... OK
+      Applying admin.0002_logentry_remove_auto_add... OK
+      Applying admin.0003_logentry_add_action_flag_choices... OK
+      Applying contenttypes.0002_remove_content_type_name... OK
+      Applying auth.0002_alter_permission_name_max_length... OK
+      Applying auth.0003_alter_user_email_max_length... OK
+      Applying auth.0004_alter_user_username_opts... OK
+      Applying auth.0005_alter_user_last_login_null... OK
+      Applying auth.0006_require_contenttypes_0002... OK
+      Applying auth.0007_alter_validators_add_error_messages... OK
+      Applying auth.0008_alter_user_username_max_length... OK
+      Applying auth.0009_alter_user_last_name_max_length... OK
+      Applying auth.0010_alter_group_name_max_length... OK
+      Applying auth.0011_update_proxy_permissions... OK
+      Applying order.0001_initial... OK
+      Applying sessions.0001_initial... OK
+
+## Launch!
+
+    :::console
+    $ ./manage.py runserver
+    Watching for file changes with StatReloader
+    Performing system checks...
+
+    System check identified no issues (0 silenced).
+    April 02, 2020 - 06:22:27
+    Django version 3.0.5, using settings 'shop.settings'
+    Starting development server at http://127.0.0.1:8000/
+    Quit the server with CONTROL-C.
+
+Of course, this all looks a little boring, as we haven't defined any Pizzas or
+Toppings.
+
+    :::console
+    $ ./manage.py shell
+    >>> from order.models import Pizza, Topping
+    >>> Topping.objects.bulk_create(Topping(name=name) for name in {'cheese', 'olives', 'onion', 'mushroom'})
+    [<Topping: olives>, <Topping: cheese>, <Topping: mushroom>, <Topping: onion>]
+    >>> Pizza.objects.bulk_create(Pizza(name=name) for name in {'Plain', 'Capriciossa', 'Hawaiian', 'Spicy'})
+    [<Pizza: Capriciossa>, <Pizza: Plain>, <Pizza: Hawaiian>, <Pizza: Spicy>]
+
+So, now we have a simple order form, that lets us pick a single pizza...
+
+## Adding a new form.
+
+Let's look closer at what our form has rendered:
+
+    :::html
+    <form method="POST" action=".">
+      <input type="hidden" name="csrfmiddlewaretoken" value="...">
+      <input type="hidden" name="form-TOTAL_FORMS" value="1" id="id_form-TOTAL_FORMS">
+      <input type="hidden" name="form-INITIAL_FORMS" value="0" id="id_form-INITIAL_FORMS">
+      <input type="hidden" name="form-MIN_NUM_FORMS" value="0" id="id_form-MIN_NUM_FORMS">
+      <input type="hidden" name="form-MAX_NUM_FORMS" value="1000" id="id_form-MAX_NUM_FORMS">
+
+      <fieldset>
+        <p>
+          <label for="id_form-0-extras">Extras:</label>
+          <select name="form-0-extras" id="id_form-0-extras" multiple="">
+            <option value="1">olives</option>
+            <option value="2">cheese</option>
+            <option value="3">mushroom</option>
+            <option value="4">onion</option>
+          </select>
+        </p>
+        <p>
+          <label for="id_form-0-pizza">Pizza:</label>
+          <select name="form-0-pizza" id="id_form-0-pizza">
+          <option value="" selected="">---------</option>
+          <option value="1">Capriciossa</option>
+          <option value="2">Plain</option>
+          <option value="3">Hawaiian</option>
+          <option value="4">Spicy</option>
+          </select>
+          <input type="hidden" name="form-0-id" id="id_form-0-id">
+        </p>
+      </fieldset>
+
+      <button type="submit"> Order </button>
+    </form>
+
+First up is the formset's "management form".  These extra details help the
+formset machinery track data about our formset.
+
+Next is our actual form, with an added hidden field showing it's "form id" in
+the formset.
+
+Let's see how this differs if we ask for 2 forms in the set.
+
+In `order/forms.py` we add the argument `extra=2`
+
+    :::html
+    <form method="POST" action=".">
+      <input type="hidden" name="csrfmiddlewaretoken" value="vhgIhYLPysSHhK9woRWscxn0Qe7uP0ltlFolNBin8aMQYN4UgKXuNgR3d3rLoicv">
+      <input type="hidden" name="form-TOTAL_FORMS" value="2" id="id_form-TOTAL_FORMS">
+      <input type="hidden" name="form-INITIAL_FORMS" value="0" id="id_form-INITIAL_FORMS">
+      <input type="hidden" name="form-MIN_NUM_FORMS" value="0" id="id_form-MIN_NUM_FORMS">
+      <input type="hidden" name="form-MAX_NUM_FORMS" value="1000" id="id_form-MAX_NUM_FORMS">
+
+      <fieldset>
+        <p>
+          <label for="id_form-0-pizza">Pizza:</label>
+          <select name="form-0-pizza" id="id_form-0-pizza">
+            <option value="" selected="">---------</option>
+            <option value="1">Capriciossa</option>
+            <option value="2">Plain</option>
+            <option value="3">Hawaiian</option>
+            <option value="4">Spicy</option>
+          </select>
+        </p>
+        <p>
+          <label for="id_form-0-extras">Extras:</label>
+          <select name="form-0-extras" id="id_form-0-extras" multiple="">
+            <option value="1">olives</option>
+            <option value="2">cheese</option>
+            <option value="3">mushroom</option>
+            <option value="4">onion</option>
+          </select>
+          <input type="hidden" name="form-0-id" id="id_form-0-id">
+        </p>
+      </fieldset>
+      <fieldset>
+        <p>
+          <label for="id_form-1-pizza">Pizza:</label>
+          <select name="form-1-pizza" id="id_form-1-pizza">
+            <option value="" selected="">---------</option>
+            <option value="1">Capriciossa</option>
+            <option value="2">Plain</option>
+            <option value="3">Hawaiian</option>
+            <option value="4">Spicy</option>
+          </select>
+        </p>
+        <p>
+          <label for="id_form-1-extras">Extras:</label>
+          <select name="form-1-extras" id="id_form-1-extras" multiple="">
+            <option value="1">olives</option>
+            <option value="2">cheese</option>
+            <option value="3">mushroom</option>
+            <option value="4">onion</option>
+          </select>
+          <input type="hidden" name="form-1-id" id="id_form-1-id">
+        </p>
+      </fieldset>
+
+      <button type="submit"> Order </button>
+    </form>
+
+So, we now have 2 copies of our form fields, but slightly differnt.
+
+The value for `form-TOTAL_FORMS` is now 2, not 1, and our fields have
+sequential prefixes: `form-0-pizza` and `form-1-pizza`
+
+## The `empty_form`
+
+Formsets provide us with a handy tool especially for what we're about to do :
+[`empty_form`](https://docs.djangoproject.com/en/3.0/topics/forms/formsets/#empty-form)
+
+Let's add it to our template and see what we're given.
+
+    :::html
+    <template id="empty-form">
+      <fieldset>
+        {{ formset.empty_form }}
+      </fieldset>
+    </template>
+
+This results in this showing in our HTML:
+
+    :::html
+    <template id="empty-form">
+      <fieldset>
+        <p>
+          <label for="id_form-__prefix__-pizza">Pizza:</label>
+          <select name="form-__prefix__-pizza" id="id_form-__prefix__-pizza">
+            <option value="" selected="">---------</option>
+            <option value="1">Capriciossa</option>
+            <option value="2">Plain</option>
+            <option value="3">Hawaiian</option>
+            <option value="4">Spicy</option>
+          </select>
+        </p>
+        <p>
+          <label for="id_form-__prefix__-extras">Extras:</label>
+          <select name="form-__prefix__-extras" id="id_form-__prefix__-extras" multiple="">
+            <option value="1">olives</option>
+            <option value="2">cheese</option>
+            <option value="3">mushroom</option>
+            <option value="4">onion</option>
+          </select>
+          <input type="hidden" name="form-__prefix__-id" id="id_form-__prefix__-id">
+        </p>
+      </fieldset>
+    </template>
+
+So this is the same as we get from `{{ form.as_p }}`, with the form counter
+replaced with ``__prefix__``.
+
+Does this mean we can add a new form to the set, just by copying this and
+replacing the ``__prefix__`` placeholder with a number? Let's try.
+
+## Attempt one.
+
+First we'll add a button to "add another Pizza"
+
+    :::html
+    <button type="button" id="add-form">Add Pizza!</button>
+
+Them we'll add some JavaScript to the end of our page:
+
+    :::html
+    <script>
+      // Find our empty-form template
+      let tmpl = document.querySelector('#empty-form');
+      // Get a handle on the current count of forms.
+      let counter = document.querySelector('[name=form-TOTAL_FORMS]')
+
+      document.querySelector('#add-form').addEventListener('click', ev => {
+        // Clone the tree
+        let newForm = tmpl.content.cloneNode(true);
+        // Update the IDs
+        newForm.querySelectorAll('[id*=__prefix__]').forEach(el => {
+          el.id = el.id.replace('__prefix__', counter.value);
+          // Iff it has a name, update that too.
+          if (el.name) el.name = el.name.replace('__prefix__', counter.value);
+        });
+        // Update our labels, too
+        newForm.querySelectorAll('[for*=__prefix__]').forEach(el => {
+          el.htmlFor = el.htmlFor.replace('__prefix__', counter.value);
+        })
+        // Increment our counter
+        counter.value = 1 + Number(counter.value);
+        // Insert our new form into the list.
+        document
+          .querySelector('form fieldset:last-of-type')
+          .insertAdjacentElement('afterend', newForm.children[0]);
+      })
+    </script>
+
+And... this works!
+
+Press the button, get a new copy of the form update all the counters.
+
+## Removing a form...
+
+## Generalising
+
+What we have may work, but it's not general purpose. It only works for a single
+given form prefix (the default `form`), and won't support multiple formsets on
+a single page.
+
+So here is an attempt at a more general purpose utility for managing a formset:
+
+    :::js
+
+    class FormSetManager {
+      constructor (el, prefix) {
+        this.el = el;
+        this.prefix = prefix;
+        this.tmpl = el.querySelector('template');
+        this.counter = el.querySelector(`[name={prefix}-TOTAL_FORMS]`);
+      }
+      addForm() {
+        let newForm = this.tmpl.content.cloneNode(true);
+        this.setFormLabels(newForm, counter.value);
+        counter.value = 1 + Number(counter.value);
+        document
+          .querySelector('form fieldset:last-of-type')
+          .insertAdjacentElement('afterend', newForm.children[0]);
+      }
+      delForm(el) {
+        el.parent.remove(el);
+        this.renumberForms();
+      }
+      renumberForms() {
+        this.el.querySelectorAll('fieldset').forEach(
+          (form, idx) => setFormLabels(el, idx)
+        );
+      }
+      setFormLabels(formEl, idx) {
+        formEl.querySelectorAll('[id*=__prefix__]').forEach(el => {
+          el.id = el.id.replace('__prefix__', idx);
+          if (el.name) el.name = el.name.replace('__prefix__', idx);
+        });
+        formEl.querySelectorAll('[for*=__prefix__]').forEach(
+          el => el.htmlFor = el.htmlFor.replace('__prefix__', idx)
+        );
+      }
+    }
+
+This code depends on:
+
+1. your form instances are wrapped in a &lt;fieldset&gt;
+1. your templates have an ID of the format 'tmpl-{prefix}'
+
+Load it in your page, and initialise it with:
+
+    :::js
+
+    const mgr = new FormSetManager()
