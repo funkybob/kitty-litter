@@ -1,0 +1,25 @@
+title: Coding Snippets
+content_type: MarkdownPage
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
+---
+
+# Snippets
+
+Just some simple code snippets I often want to remember...
+
+## JavaScript
+
+### DOM
+
+#### Delegate an event
+
+    :::js
+
+    function delegate(root, event, selector, handler) {
+      document.querySelector(root).addEventListener(event, ev => {
+        if(ev.target.matches(selector)) handler(ev);
+      })
+    }
+
