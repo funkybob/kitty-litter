@@ -177,6 +177,15 @@ Again, some basic client side code to post to this might be:
 
 See [here](/blog/modern-vanilla-js-cookie-parsing.html) for how to parse your cookies.
 
+Alternatively, if you don't have a <form> element handy, you can programatically build a `FormData`:
+
+    :::js
+    const data = new FormData()
+    data.append('username', username);
+    data.append('password', password);
+
+See [here](https://developer.mozilla.org/en-US/docs/Web/API/FormData) for more details on the `FormData` object.
+
 ### Logging out
 
 It always seemed logical to me logging out is like deleting your login, so why
