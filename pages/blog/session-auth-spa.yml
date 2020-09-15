@@ -163,13 +163,19 @@ Again, some basic client side code to post to this might be:
     document.querySelector('#login-form').addEventListener('submit', async ev => {
       ev.preventDefault();
       const data = new FormData(ev.target);
-      const resp = await fetch('/user/', { method: 'POST', credentials: 'same-origin' })
+      const resp = await fetch('/user/', {
+        method: 'POST',
+        credentials: 'same-origin'
+        headers: { 'X-CSRFToken': csrf_token },
+      })
       if (resp.ok) {
         user = await resp.json();
       } else {
         errors = await resp.json();
       }
     })
+
+See [here](/blog/modern-vanilla-js-cookie-parsing.html) for how to parse your cookies.
 
 ### Logging out
 
