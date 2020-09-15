@@ -105,8 +105,8 @@ Relevant docs:
 
 [ensure_csrf_cookie](https://docs.djangoproject.com/en/3.1/ref/csrf/#django.views.decorators.csrf.ensure_csrf_cookie)
 
-This is enough for our SPA to query the current user. Next we'll let them log
-in!
+This is enough for our SPA to query the current user, or detect they're not
+logged in. Next we'll let them log in!
 
 The client side code might look like:
 
@@ -194,7 +194,7 @@ not use the HTTP DELETE verb?
 
     :::py
     from django import http
-    from django.contrib.auth import login
+    from django.contrib.auth import login, logout
     from django.contrib.auth.forms import AuthenticationForm
     from django.utils.decorators import method_decorator
     from django.views.decorators.csrf import ensure_csrf_cookie
