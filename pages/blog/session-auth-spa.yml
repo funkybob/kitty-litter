@@ -139,7 +139,7 @@ login machinery.
             })
 
         def post(self, request):
-            form = AuthenticationForm(request, self.POST)
+            form = AuthenticationForm(request, request.POST)
             if form.is_valid():
               login(request, form.get_user())
               return self.get(request)
@@ -153,7 +153,7 @@ Relevant docs:
 [How to log a user
 in](https://docs.djangoproject.com/en/3.1/topics/auth/default/#how-to-log-a-user-in)
 
-[form.as_data()](https://docs.djangoproject.com/en/3.1/ref/forms/api/#django.forms.Form.errors.as_data)
+[form.errors.as_data()](https://docs.djangoproject.com/en/3.1/ref/forms/api/#django.forms.Form.errors.as_data)
 
 Again, some basic client side code to post to this might be:
 
@@ -201,12 +201,12 @@ not use the HTTP DELETE verb?
             })
 
         def post(self, request):
-            form = AuthenticationForm(request, self.POST)
+            form = AuthenticationForm(request, request.POST)
             if form.is_valid():
               login(request, form.get_user())
               return self.get(request)
 
-            return http.JsonResponse(form.as_data(), status=403)
+            return http.JsonResponse(form.errors.as_data(), status=403)
 
         def delete(self, request):
             logout(request)
@@ -219,3 +219,8 @@ not use the HTTP DELETE verb?
 I hope this shows that using Django's default, built-in session auth system can
 be easy with you SPA app. If you have any problems or feedback, feel free to
 comment and let me know, and I'll update this post!
+
+## Thanks
+
+Many thanks to Bjorn Dissing who prompted me to finally write this post, and
+helped me field test it!
