@@ -1,0 +1,187 @@
+title: Using Django's session auth with your SPA
+content_type: BlogPost
+date: 2020-09-15
+tags:
+  - django
+  - jwt
+  - authentication
+extras:
+  - codehilite
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
+---
+
+I keep hearing people saying they use Token auth because they think Django's
+default session-based auth won't work with their Vue/React/whatever Single Page
+Application (SPA).
+
+This has always baffled me, beyond assuming people are cargo culting something.
+
+Also I've recently had interactions with someone I deeply respect, who also
+seemed to feel Django's docs on handling authentication with a SPA were
+lacking.
+
+So here's my notes on what it takes.
+
+## Overview
+
+Django's sessions work by putting a session ID token into a cookie. Since web
+browsers send cookies automatically, it takes no effort on the part of your SPA
+to send this with every request.
+
+If you're using `fetch` you will need to set `credentials` to at least
+`same-origin`.
+
+Django's session-based auth works by storing the user ID and the auth backend
+that found them in the session.
+
+So long as the user agent (e.g. your browser) sends the cookie, it will "just
+work".
+
+## Problems
+
+The only problem I've ever had with using Django's login machinery from a SPA
+is handling [CSRF](https://docs.djangoproject.com/en/3.1/ref/csrf/).
+
+I've seen some people choose to disable it, and this seems backwards to me. Why
+disable security around auth, of all things?
+
+Instead, I provide an API endpoint for requesting the current user, and
+decorate it with
+[`ensure_csrf_cookie`](https://docs.djangoproject.com/en/3.1/ref/csrf/#django.views.decorators.csrf.ensure_csrf_cookie).
+
+Now when your SPA starts up, it can query for the current User, to check if
+they're logged in. In doing so, it will _also_ cause a fresh CSRF cookie to be
+issued.
+
+Remember to ensure your POST requests pass along the CSRF token as described in
+the [CSRF docs](https://docs.djangoproject.com/en/3.1/ref/csrf/#ajax).
+
+## The Endpoint
+
+So first, let's provide a Class-Based view that will let your SPA check the
+current user's details with a GET:
+
+    :::py
+    from django import http
+    from django.views.generic import View
+
+    class UserView(View):
+        def get(self, request):
+            if not request.user.is_authenticated:
+              return http.HttpResponseForbidden()
+            return http.JsonResponse({
+              id: request.user.pk,
+              username: request.user.get_username(),
+            })
+
+Relevant docs:
+
+[Class-Based
+Views](https://docs.djangoproject.com/en/3.1/topics/class-based-views/)
+
+[JsonResponse](https://docs.djangoproject.com/en/3.1/ref/request-response/#jsonresponse-objects)
+
+Next, we'll add in the `ensure_csrf_cookie` decorator:
+
+    :::py
+    from django import http
+    from django.utils.decorators import method_decorator
+    from django.views.decorators.csrf import ensure_csrf_cookie
+    from django.views.generic import View
+
+    @method_decorator(ensure_csrf_cookie, 'dispatch')
+    class UserView(View):
+        def get(self, request):
+            if not request.user.is_authenticated:
+              return http.HttpResponseForbidden()
+            return http.JsonResponse({
+              id: request.user.pk,
+              username: request.user.get_username(),
+            })
+
+Relevant docs:
+
+[method_decorator](https://docs.djangoproject.com/en/3.1/topics/class-based-views/intro/#decorating-the-class)
+
+[ensure_csrf_cookie](https://docs.djangoproject.com/en/3.1/ref/csrf/#django.views.decorators.csrf.ensure_csrf_cookie)
+
+This is enough for our SPA to query the current user. Next we'll let them log
+in!
+
+### Logging in
+
+As you normally would, capture the user identifier and password, and POST them
+to the view. All the heavy lifting here is done by Django's existing forms and
+login machinery.
+
+    :::py
+    from django import http
+    from django.contrib.auth import login
+    from django.contrib.auth.forms import AuthenticationForm
+    from django.utils.decorators import method_decorator
+    from django.views.decorators.csrf import ensure_csrf_cookie
+    from django.views.generic import View
+
+    @method_decorator(ensure_csrf_cookie, 'dispatch')
+    class UserView(View):
+        def get(self, request):
+            if not request.user.is_authenticated:
+              return http.HttpResponseForbidden()
+            return http.JsonResponse({
+              id: request.user.pk,
+              username: request.user.get_username(),
+            })
+
+        def post(self, request):
+            form = AuthenticationForm(request, self.POST)
+            if form.is_valid():
+              login(request, form.get_user())
+              return self.get(request)
+
+            return http.JsonResponse(form.as_data(), status=403)
+
+Relevant docs:
+
+[AuthenticationForm](https://docs.djangoproject.com/en/3.1/topics/auth/default/#django.contrib.auth.forms.AuthenticationForm)
+
+[How to log a user
+in](https://docs.djangoproject.com/en/3.1/topics/auth/default/#how-to-log-a-user-in)
+
+[form.as_data()](https://docs.djangoproject.com/en/3.1/ref/forms/api/#django.forms.Form.errors.as_data)
+
+### Logging out
+
+It always seemed logical to me logging out is like deleting your login, so why
+not use the HTTP DELETE verb?
+
+    :::py
+    from django import http
+    from django.contrib.auth import login
+    from django.contrib.auth.forms import AuthenticationForm
+    from django.utils.decorators import method_decorator
+    from django.views.decorators.csrf import ensure_csrf_cookie
+    from django.views.generic import View
+
+    @method_decorator(ensure_csrf_cookie, 'dispatch')
+    class UserView(View):
+        def get(self, request):
+            if not request.user.is_authenticated:
+              return http.HttpResponseForbidden()
+            return http.JsonResponse({
+              id: request.user.pk,
+              username: request.user.get_username(),
+            })
+
+        def post(self, request):
+            form = AuthenticationForm(request, self.POST)
+            if form.is_valid():
+              login(request, form.get_user())
+              return self.get(request)
+
+            return http.JsonResponse(form.as_data(), status=403)
+
+        def delete(self, request):
+            logout(request)
+
+            return http.HttpResponse(status=205)  # Reset Content
+
