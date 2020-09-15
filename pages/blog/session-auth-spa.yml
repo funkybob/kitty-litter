@@ -108,6 +108,12 @@ Relevant docs:
 This is enough for our SPA to query the current user. Next we'll let them log
 in!
 
+The client side code might look like:
+
+    :::js
+
+    const user = await fetch('/user/', { credentials: 'same-origin' }).then(resp => resp.json())
+
 ### Logging in
 
 As you normally would, capture the user identifier and password, and POST them
@@ -149,6 +155,22 @@ in](https://docs.djangoproject.com/en/3.1/topics/auth/default/#how-to-log-a-user
 
 [form.as_data()](https://docs.djangoproject.com/en/3.1/ref/forms/api/#django.forms.Form.errors.as_data)
 
+Again, some basic client side code to post to this might be:
+
+    :::js
+
+    const user;
+    document.querySelector('#login-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const data = new FormData(ev.target);
+      const resp = await fetch('/user/', { method: 'POST', credentials: 'same-origin' })
+      if (resp.ok) {
+        user = await resp.json();
+      } else {
+        errors = await resp.json();
+      }
+    })
+
 ### Logging out
 
 It always seemed logical to me logging out is like deleting your login, so why
@@ -185,3 +207,9 @@ not use the HTTP DELETE verb?
 
             return http.HttpResponse(status=205)  # Reset Content
 
+
+## Conclusion
+
+I hope this shows that using Django's default, built-in session auth system can
+be easy with you SPA app. If you have any problems or feedback, feel free to
+comment and let me know, and I'll update this post!
