@@ -70,8 +70,8 @@ current user's details with a GET:
             if not request.user.is_authenticated:
               return http.HttpResponseForbidden()
             return http.JsonResponse({
-              id: request.user.pk,
-              username: request.user.get_username(),
+              "id": request.user.pk,
+              "username": request.user.get_username(),
             })
 
 Relevant docs:
@@ -95,8 +95,8 @@ Next, we'll add in the `ensure_csrf_cookie` decorator:
             if not request.user.is_authenticated:
               return http.HttpResponseForbidden()
             return http.JsonResponse({
-              id: request.user.pk,
-              username: request.user.get_username(),
+              "id": request.user.pk,
+              "username": request.user.get_username(),
             })
 
 Relevant docs:
@@ -134,8 +134,8 @@ login machinery.
             if not request.user.is_authenticated:
               return http.HttpResponseForbidden()
             return http.JsonResponse({
-              id: request.user.pk,
-              username: request.user.get_username(),
+              "id": request.user.pk,
+              "username": request.user.get_username(),
             })
 
         def post(self, request):
@@ -206,8 +206,8 @@ not use the HTTP DELETE verb?
             if not request.user.is_authenticated:
               return http.HttpResponseForbidden()
             return http.JsonResponse({
-              id: request.user.pk,
-              username: request.user.get_username(),
+              "id": request.user.pk,
+              "username": request.user.get_username(),
             })
 
         def post(self, request):
