@@ -1,6 +1,6 @@
 title: Using Django's session auth with your SPA
 content_type: BlogPost
-date: 2020-09-15
+date: 2020-09-16
 tags:
   - django
   - jwt
