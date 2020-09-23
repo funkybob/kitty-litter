@@ -144,7 +144,7 @@ login machinery.
               login(request, form.get_user())
               return self.get(request)
 
-            return http.JsonResponse(form.as_data(), status=403)
+            return http.JsonResponse(form.errors.as_data(), status=400)
 
 Relevant docs:
 
