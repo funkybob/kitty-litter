@@ -167,7 +167,10 @@ Again, some basic client side code to post to this might be:
         method: 'POST',
         body: data,
         credentials: 'same-origin'
-        headers: { 'X-CSRFToken': csrf_token },
+        headers: {
+          'X-CSRFToken': csrf_token,
+          'Content-Type': "multipart/form-data",
+        },
       })
       if (resp.ok) {
         user = await resp.json();
