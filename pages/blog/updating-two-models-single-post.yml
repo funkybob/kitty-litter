@@ -34,7 +34,7 @@ Firstly, the forms don't need to be anything special, but for one point:
 
     class ProfileForm(models.ModelForm):
         model = models.Profile
-        fields = '__all__'
+        fields = [...]
         exclude = ['user']
 
 We omit the `user` field so the `ProfileForm` won't show a drop-down list of
