@@ -59,12 +59,6 @@ Next we insall the packages we need:
     :::console
     # apt install -y h2o python3-venv fail2ban git htop gnupg
 
-Then, we tidy up and reboot:
-
-    :::console
-    # apt autoremove
-    # reboot
-
 Last, we create a regular service user for every day use:
 
     :::console
@@ -84,6 +78,10 @@ Postgresql](https://www.postgresql.org/download/linux/debian/)
     # wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
     # apt update
     # apt install -y postgresql
+
+Let's take this opportunity to clean up:
+
+    # apt autoremove
 
 Next step, we'll create a DB user for our app, and for ourselves:
 
@@ -143,7 +141,14 @@ We need to make space for our app to live:
     # chown www-data:www-data www
     # chmod g+w www
 
-Then as our regular user:
+We can use `su` to switch to our user:
+
+    # su - {username}
+    $
+
+When we exit (or use ctrl-D) it will exit back to our root shell.
+
+Now as our regular user:
 
     :::console
     $ cd /srv/www/
@@ -231,6 +236,7 @@ As root, add the file `/etc/systemd/system/gunicorn.service`:
 
     [Service]
     Type=notify
+    Group=www-data
     DynamicUser=yes
     RuntimeDirectory=gunicorn
     WorkingDirectory=/srv/www/code
@@ -263,14 +269,19 @@ And at long last, we can ask `systemd` to start our socket service:
     :::console
     # systemctl enable --now gunicorn.socket
 
+Finally, to make sure it's all safe and reliable, we'll reboot:
+
+    :::console
+    # reboot
+
 ## And... that's it?
 
 To summarise, we have:
 
-- installed Postgresql
 - installed h2o
-- installed our codebase
+- installed Postgresql
 - installed gunicorn
+- installed our codebase
 - configured gunicorn to launch on startup
 
 This is a _very_ basic setup. We've not:
@@ -280,3 +291,14 @@ This is a _very_ basic setup. We've not:
 - [determined an appropriate number and type of gunicorn workers](https://docs.gunicorn.org/en/latest/faq.html#worker-processes)
 
 But as all of those are dependent upon your application, I won't delve into them here.
+
+## Final comments.
+
+The dynamic user feature of sytemd was new to me, and somewhat handy. It means
+systemd will clean up after us, and our task won't have any persistent files.
+
+Using the role switch was the only 'novel' step in this process, and one I'm
+thankful to RhodiumToad on IRC for showing me.
+
+My main issue with this setup is it requires root to restart the service when
+you update/change your code/settings.
