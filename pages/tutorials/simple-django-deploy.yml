@@ -1,4 +1,4 @@
-title: Simple Django Deploy
+title: Beginners Django Deploy
 content_type: MarkdownPage
 tags:
   - in-menu
@@ -10,10 +10,10 @@ extras:
   - admonition
 extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
-The following is a simplified version of my Django Deployment guide, reduced
-for just running a single site.
 
-So, here is a guide to setting up a brand new
+The following is a simple Django Deployment guide for begginers.
+
+It includes steps to setting up a brand new
 [DigitalOcean](https://www.digitalocean.com/?refcode=214aac02886d) droplet,
 ready to host a single Django site.
 
@@ -67,8 +67,8 @@ We'll be keeping the web sites in `/srv/www/` with the following layout:
 
 In this guide I'll assume some basic familiarity with using Linux and its ilk.
 
-I will also try to abide by basic good security practices. This means we use
-`root` as little as possible.
+I will also try to abide by basic good security practices. This means, for
+instance, we use `root` as little as possible.
 
 One thing that turns up often is people are learning somewhere that "if it
 doesn't work, sudo!".
@@ -89,8 +89,9 @@ to be run as root, and those with `$` as a normal user.
 
 Lastly, text editors. It's a personal choice. My preference is `vi`, but many
 find this (understandably) arcane. In a default install of Debian, you will
-typically have a choice between `vi`, `nano`, `pico`, and possibly more. Use
-what you feel most confident with.
+typically have a choice between `vi`, `nano`, `pico`, and possibly more.
+
+Use what you feel most confident and comfortable with.
 
 ## Setting up a Droplet
 
@@ -134,13 +135,6 @@ First, we update the package data (remember, `#` means do this as root):
     # apt-get update
     # apt-get autoclean
 
-The first rule of securing a server is to not run network services you don't
-need - minimal attack surface. So we're going to remove `rpcbind`, as we don't
-use NFS.
-
-    :::console
-    # apt-get purge rpcbind
-
 Now we update all our installed packages.
 
     :::console
@@ -183,11 +177,11 @@ _absolutely_ _must_.
 This helps to prevent mistakes; we all make mistakes.
 
     :::console
-    # useradd -G www-data,sudo -m {username}
+    # useradd -G www-data -m {username}
     # passwd {username}
 
-This creates a `username` user, in the www-data group so we can edit sites, the
-sudo group so we can use sudo, and then we set the password.
+This creates a `username` user, in the www-data group so we can edit sites, and
+then we set the password.
 
 In a new window, try logging in to make sure this worked.
 
@@ -199,7 +193,7 @@ We want to configure to _only_ accept mail from local connections, since we have
 no need to receive emails, and don't want to be a relay for spam.
 
     :::console
-    # apt-get install opensmtpd
+    # apt install -y opensmtpd
 
 The default config will only accept connections on localhost, so is good enough.
 
@@ -208,7 +202,7 @@ The default config will only accept connections on localhost, so is good enough.
 Installing Postgres is simple, and the default configuration is fine.
 
     :::console
-    # apt-get install postgresql-11
+    # apt install -y postgresql-11
 
 The install will then prompt you to start the freshly created 'cluster'.
 
