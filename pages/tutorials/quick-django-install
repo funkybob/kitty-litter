@@ -1,0 +1,282 @@
+title: Quick Django VPS Install
+content_type: MarkdownPage
+tags:
+  - in-menu
+  - django
+  - gunicorn
+extras:
+  - def_list
+  - toc
+  - attr_list
+  - codehilite
+  - admonition
+extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
+---
+
+This is a minimal guide for setting up a minimal host server for Django.
+
+When testing this I used a USD$5/month VPS from
+[Vultr](https://www.vultr.com/?ref=8698622), but any common VPS service will
+suffice.
+
+> Note: that link is my afiliate link; See
+[here](https://www.vultr.com/company/referral-program/) for more details.
+
+## Table of contents
+
+[TOC]
+
+## Assumptions
+
+1. You know Linux moderately well.
+1. You are familiar with Django and virtualenv.
+1. You have bought a VPS instance and installed Debian on it.
+
+If you want to use a different OS/Distro, you will need to adjust some steps to
+suit.
+
+## Conventions
+
+    :::console
+    # this is a root prompt
+
+    $ this is a user prompt
+
+    (venv)$ this is a user prompt with the virtualenv active
+
+## Preparing
+
+First, we're going to do a little house cleaning and ensure our system is up to
+date:
+
+    :::console
+    # apt update
+    # apt autoclean
+    # apt dist-upgrade -y
+
+Next we insall the packages we need:
+
+    :::console
+    # apt install -y h2o python3-venv fail2ban git htop gnupg
+
+Then, we tidy up and reboot:
+
+    :::console
+    # apt autoremove
+    # reboot
+
+Last, we create a regular service user for every day use:
+
+    :::console
+    # useradd -G www-data -m {username}
+    # passwd {username}
+
+## Postgresql
+
+I always use Postgresql. Unless you have a _good_ reason otherwise, you probably
+ought, too.
+
+We're going to follow the [instructions from
+Postgresql](https://www.postgresql.org/download/linux/debian/)
+
+    :::console
+    # echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+    # wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+    # apt update
+    # apt install -y postgresql
+
+Next step, we'll create a DB user for our app, and for ourselves:
+
+    :::console
+    # su - postgres -c "createuser gunicorn"
+    # su - postgres -c "createuser -g gunicorn -d {username}"
+
+## The Web Server
+
+As a departure from the common place, I'm using a relatively new web server:
+[h2o](https://h2o.examp1e.net/index.html).
+
+It provides an impressive list of features:
+
+- HTTP2 native
+- HTTP / HTTPS
+- FastCGI / Reverse proxy
+- Strong focus on security
+- Impressive performance
+
+Beyond that, it is by far the simplest web server to configure I've found yet.
+
+We need to replace the default config file `/etc/h2o/h2o.conf` with our own:
+
+    server-name: "My site"
+    user: www-data
+    access-log: "|rotatelogs -l -f -L /var/log/h2o/access.log -p /usr/share/h2o/compress_logs /var/log/h2o/access.log.%Y-%m-%d 86400"
+    error-log: "|rotatelogs -l -f -L /var/log/h2o/error.log -p /usr/share/h2o/compress_logs /var/log/h2o/error.log.%Y-%m-%d 86400"
+    pid-file: /run/h2o.pid
+
+    listen:
+      port: 80
+
+    hosts:
+      default:
+        paths:
+          "":
+            proxy.reverse.url: "http://[unix:/srv/www/gunicorn.sock]"
+            proxy.preserve-host: ON
+          "/static":
+            file.dir: /srv/www/html/static
+          "/media":
+            file.dir: /srv/www/html/media
+
+Now we can ask `systemd` to restart with our updated config:
+
+    :::console
+    # systemctl restart h2o
+
+## The App
+
+We need to make space for our app to live:
+
+    :::console
+    # cd /srv
+    # mkdir www
+    # chown www-data:www-data www
+    # chmod g+w www
+
+Then as our regular user:
+
+    :::console
+    $ cd /srv/www/
+
+Make all the directories we need:
+
+    :::console
+    $ mkdir -p code html/static html/media
+    $ chgrp -R www-data html
+    $ chmod -R g+w html
+
+Create the virtualenv, and install some essentials:
+
+    :::console
+    $ python3 -m venv venv
+    $ . venv/bin/activate
+    (venv)$ pip install gunicorn psycopg2-binary
+
+Checkout your code using git, and ensure the root of the Django project (i.e.
+where manage.py is) is at `/srv/www/code`. Either check out the repo there, or
+use a symlink.
+
+For this example, we'll create a fresh Django project instead:
+
+    :::console
+    (venv)$ pip install django
+    (venv)$ django-admin startproject sample code
+
+Edit `code/sample/settings.py` to add:
+
+    :::python
+
+    STATIC_ROOT='/srv/www/html/static/'
+    MEDIA_ROOT='/srv/www/html/media/'
+
+And update the `DATABASES` entry:
+
+    :::python
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'sample',
+            'OPTIONS': {
+                'options': '-c role=gunicorn',
+            }
+        }
+    }
+
+The `OPTIONS` section there is more for using `manage.py` than runtime; It tells
+`libpq` (which `psycopg2` uses to talk to Postgres) to switch to the `gunicorn`
+when connecting. We can do this because we added ourselves to the `gunicorn`
+role when creating our DB user.
+
+We must also remember to set `DEBUG` to `False`, and add our hostname to the
+`ALLOWED_HOSTS`.
+
+Before going further, let's create the DB instance for this app:
+
+    :::console
+    $ createdb -O gunicorn sample
+
+And our regular django deploy steps:
+
+    :::console
+    (venv)$ python manage.py migrate
+    (venv)$ python manage.py collectstatic
+    (venv)$ python manage.py createsuperuser
+
+## The App Server
+
+For simplicity we'll use [gunicorn](https://gunicorn.org/)
+
+It's fast, stable, flexible, and well supported.
+
+We're going to use the [gunicorn systemd](https://docs.gunicorn.org/en/latest/deploy.html#systemd) recipe
+
+As root, add the file `/etc/systemd/system/gunicorn.service`:
+
+    :::ini
+    [Unit]
+    Description=gunicorn daemon
+    Requires=gunicorn.socket
+    After=network.target
+
+    [Service]
+    Type=notify
+    DynamicUser=yes
+    RuntimeDirectory=gunicorn
+    WorkingDirectory=/srv/www/code
+    # Path to our venv install of gunicorn
+    ExecStart=/srv/www/venv/bin/gunicorn sample.wsgi
+    ExecReload=/bin/kill -s HUP $MAINPID
+    KillMode=mixed
+    TimeoutStopSec=5
+    PrivateTmp=true
+
+    [Install]
+    WantedBy=multi-user.target
+
+Next, add `/etc/systemd/system/gunicorn.socket`:
+
+    :::ini
+    [Unit]
+    Description=gunicorn socket
+
+    [Socket]
+    ListenStream=/srv/www/gunicorn.sock
+    SocketUser=www-data
+    SocketMode=600
+
+    [Install]
+    WantedBy=sockets.target
+
+And at long last, we can ask `systemd` to start our socket service:
+
+    :::console
+    # systemctl enable --now gunicorn.socket
+
+## And... that's it?
+
+To summarise, we have:
+
+- installed Postgresql
+- installed h2o
+- installed our codebase
+- installed gunicorn
+- configured gunicorn to launch on startup
+
+This is a _very_ basic setup. We've not:
+
+- [tuned our Postgres settings](https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server)
+- [enabled pre-compressed assets](https://h2o.examp1e.net/configure/file_directives.html#file.send-compressed)
+- [determined an appropriate number and type of gunicorn workers](https://docs.gunicorn.org/en/latest/faq.html#worker-processes)
+
+But as all of those are dependent upon your application, I won't delve into them here.
