@@ -303,3 +303,11 @@ thankful to RhodiumToad on IRC for showing me.
 
 My main issue with this setup is it requires root to restart the service when
 you update/change your code/settings.
+
+## Todo
+
+Some refinements I'd like to make to this:
+
+1. make it easier to restart the app as our normal user [perhaps via PID file?]
+1. include instructions for TLS, and enabling HTTP/2
+1. LetsEncrypt, anyone?
