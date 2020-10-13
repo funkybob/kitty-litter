@@ -178,7 +178,7 @@ Again, some basic client side code to post to this might be:
 
 See [here](/blog/modern-vanilla-js-cookie-parsing.html) for how to parse your cookies.
 
-Alternatively, if you don't have a `&lt;form&gt;` element handy, you can programatically build a `FormData`:
+Alternatively, if you don't have a `<form>` element handy, you can programatically build a `FormData`:
 
     :::js
     const data = new FormData()
