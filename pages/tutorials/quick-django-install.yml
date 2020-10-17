@@ -107,6 +107,7 @@ Beyond that, it is by far the simplest web server to configure I've found yet.
 
 We need to replace the default config file `/etc/h2o/h2o.conf` with our own:
 
+    :::yaml
     server-name: "My site"
     user: www-data
     access-log: "|rotatelogs -l -f -L /var/log/h2o/access.log -p /usr/share/h2o/compress_logs /var/log/h2o/access.log.%Y-%m-%d 86400"
