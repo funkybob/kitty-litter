@@ -91,8 +91,8 @@ Now we also need to add a custom Manager to help the rest of Django.
             return self._create_user(email, password, **kwargs)
 
         def create_superuser(self, email, password, **kwargs):
-            kwargs.setdefault('is_superuser', True)
             kwargs.setdefault('is_staff', True)
+            kwargs.setdefault('is_superuser', True)
             return self._create_user(email, password, **kwargs)
 
 
