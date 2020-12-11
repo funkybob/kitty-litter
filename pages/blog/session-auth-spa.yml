@@ -105,14 +105,14 @@ Relevant docs:
 
 [ensure_csrf_cookie](https://docs.djangoproject.com/en/3.1/ref/csrf/#django.views.decorators.csrf.ensure_csrf_cookie)
 
-This is enough for our SPA to query the current user, or detect they're not
-logged in. Next we'll let them log in!
-
 The client side code might look like:
 
     :::js
 
     const user = await fetch('/user/', { credentials: 'same-origin' }).then(resp => resp.json())
+
+This is enough for our SPA to query the current user, or detect they're not
+logged in. Next we'll let them log in!
 
 ### Logging in
 
