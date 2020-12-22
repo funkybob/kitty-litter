@@ -116,7 +116,7 @@ Fortunately, the answer turns out to be almost as simple:
             'profile_form': profile_form,
         })
 
-The differnce here is we need to edit the `Profile` instance before it's saved,
+The difference here is we need to edit the `Profile` instance before it's saved,
 to set the `user` field to our newly created `User` instance.
 
 See
