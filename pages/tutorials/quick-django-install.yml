@@ -54,7 +54,7 @@ date:
     # apt autoclean
     # apt dist-upgrade -y
 
-Next we insall the packages we need:
+Next we install the packages we need:
 
     :::console
     # apt install -y h2o python3-venv fail2ban git htop gnupg
