@@ -1,6 +1,9 @@
 title: Tokens ain't Tokens
 content_type: BlogPost
 date: 2020-09-15
+tags:
+  - jwt
+  - authentication
 extras:
   - codehilite
 extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
