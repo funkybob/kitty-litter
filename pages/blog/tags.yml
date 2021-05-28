@@ -2,7 +2,6 @@ content_type: TagIndex
 title: Tags
 exclude_tags:
   - in-menu
-sort_by: '-date'
 filter_by:
   startswith:
     - attr: ['name']
