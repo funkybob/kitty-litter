@@ -261,10 +261,12 @@ Finally, hook these URLs into your root urls.py
 Remember to write the following templates:
 
 - register/register_form.html : Presents the registration form, including the `email` field.
-- register/registration_email.txt : Body of the verification email
+- register/registration_email.html : Body of the verification email
 - register/registration_subject.txt : Subject-line of the verification email
 
 See [here](https://docs.djangoproject.com/en/2.1/topics/auth/default/#django.contrib.auth.views.PasswordResetView) for what context is provided.
+
+Note that from the example email template on the docs, you will need to change the `{% url %}` to reference `accounts:register-confirm`.
 
 - register/register_done.html : Shown after the initial registration form is submitted, after the email is sent.
 
