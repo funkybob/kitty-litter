@@ -181,7 +181,7 @@ Now, we add our registration view to `accounts/views.py`:
     class UserRegistrationView(PasswordResetView):
         template_name = 'register/register_form.html'
         form_class = forms.RegistrationForm
-        email_template_name = 'register/registration_email.txt'
+        email_template_name = 'register/registration_email.html'
         # html_email_template_name = Set
         subject_template_name = 'register/registration_subject.txt'
         success_url = reverse_lazy('accounts:register-done')
