@@ -170,16 +170,19 @@ the Issuer to request a fresh Authorization Token.
 similarities here.)
 
 For comparison, the sequence for using session auth might be:
+
 - make authentication request
 - make target request
 
 Or if your process runs persistently:
+
 - make target request
 - get 401
 - make authentication request
 - repeat target request
 
 Whereas when using a Token:
+
 - make target request
 - get 401
 - make token refresh request
