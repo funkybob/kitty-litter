@@ -11,7 +11,7 @@ extras:
 extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 ---
 
-The following is a simple Django Deployment guide for begginers.
+The following is a simple Django Deployment guide for beginners.
 
 It includes steps to setting up a brand new
 [DigitalOcean](https://www.digitalocean.com/?refcode=214aac02886d) droplet,
