@@ -64,7 +64,7 @@ Why `AbstractBaseUser`, and not `AbstractUser`?  Because `AbstractUser`
 implements the default Django user model, and we don't want that.  Notably, it
 includes 'username' as unique, and 'email' as not.
 
-`PermissionsMixin` gives us `is_superuser`, `groups` and `user_permissions`, as
+From `PermissionsMixin` we get `is_superuser`, `groups` and `user_permissions`, as
 well as the right methods to participate in the normal permissions machinery.
 
 Now we also need to add a custom Manager to help the rest of Django.

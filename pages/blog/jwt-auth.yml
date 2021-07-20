@@ -20,7 +20,7 @@ Django REST Framework.
 I have frequently helped people on IRC having issues supporting token based
 auth in their APIs. But all too often they can't explain why they're using
 token auth or what problems it solve for them, just that they read somewhere it
-was needed. (Or worse, their Manager demanded it without justification.)
+was needed. (Or worse, their manager demanded it without justification.)
 
 My focus in this post is the all too common misconception that when you use a
 Single Page App (SPA), or Mobile App, or API, you _should_ or _must_ use Token
@@ -57,7 +57,7 @@ The server could indicate authentication was required by sending a header like
 that Basic type auth is required for this URL, along with a hint for the user
 as to what they're authenticating for.
 
-The browser, after promting the user for their credentials, would pass a header
+The browser, after prompting the user for their credentials, would pass a header
 `Authorization: Basic QWxhZGRpbjpPcGVuU2VzYW1l`. The value here is the Base64
 encoded value of the username and password joined with a ':'.
 
@@ -75,8 +75,8 @@ hidden details about a specific visitor. These details are mapped to the
 visitor using a ``session cookie``, containing a key identifying their session
 record.
 
-Session authentication works by storing in the session which user is
-authenticated. When a user logs in, their User ID is stored in the session.
+Session authentication works by storing the authenticated user in the session.
+When a user logs in, their User ID is stored in the session.
 
 On subsequent requests, the application can verify which user is logged in by
 checking this session value.
@@ -85,8 +85,8 @@ When a user logs out, their auth details are removed from the session.  If the
 session expires (either purged by the system, or the cookie expires) the user
 is implicitly logged out.
 
-The great benefit of using sessions and cookies like this is it requires no
-effort for the client to remain logged in. All they need is proper cookie
+The great benefit of using sessions and cookies like this is that it requires no
+effort for the client to remain logged in. All that's needed is proper cookie
 handling, and it "just works".
 
 ### What is Token Auth?
@@ -104,7 +104,7 @@ this header on every request.
 [JSON Web Tokens](https://tools.ietf.org/html/rfc7519) are a format used for
 providing a signed, structured token containing various "claims" about the
 bearer of the token, such as the right (authorisation) to operate as a specific
-user, in a given timeframe, with a given subject (service).
+user, in a given time frame, with a given subject (service).
 
 They can be cryptographically signed to allow consuming services (e.g. APIs) to
 verify they were issued by a trusted third party.
@@ -121,7 +121,7 @@ So, when would you pick Token Auth over Session Auth?
 ### Automated agents
 
 One big strength of Token Auth is tokens don't have to directly represent
-users; they can delegate a sub-set of rights to an entity to use on behalf of a
+users; they can delegate a subset of rights to an entity to use on behalf of a
 user. This is a large part of the Social Auth scene; allowing users to delegate
 limited authorisation without authentication to 3rd party services.
 
@@ -151,7 +151,7 @@ As noted, when you move to Token authentication, it becomes the responsibility
 of your Client to add the token header on every request. Typically in a modern
 SPA this is a minor overhead.
 
-### Revokation and Expiration
+### Revocation and Expiration
 
 Since the issuer is no longer contacted, there is no way to forcibly cancel or
 retire an issued token.

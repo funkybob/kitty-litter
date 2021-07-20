@@ -14,7 +14,7 @@ I keep hearing people saying they use Token auth because they think Django's
 default session-based auth won't work with their Vue/React/whatever Single Page
 Application (SPA).
 
-This has always baffled me, beyond assuming people are cargo culting something.
+This has always baffled me, beyond assuming people are (cargo culting)[https://en.wikipedia.org/wiki/Cargo_cult] something.
 
 Also I've recently had interactions with someone I deeply respect, who also
 seemed to feel Django's docs on handling authentication with a SPA were
@@ -34,7 +34,7 @@ If you're using `fetch` you will need to set `credentials` to at least
 Django's session-based auth works by storing the user ID and the auth backend
 that found them in the session.
 
-So long as the user agent (e.g. your browser) sends the cookie, it will "just
+So, as long as the user agent (e.g. your browser) sends the cookie, it will "just
 work".
 
 ## Problems
@@ -42,7 +42,7 @@ work".
 The only problem I've ever had with using Django's login machinery from a SPA
 is handling [CSRF](https://docs.djangoproject.com/en/3.1/ref/csrf/).
 
-I've seen some people choose to disable it, and this seems backwards to me. Why
+I've seen some people choose to disable it, and this seems backward to me. Why
 disable security around auth, of all things?
 
 Instead, I provide an API endpoint for requesting the current user, and
@@ -178,7 +178,7 @@ Again, some basic client side code to post to this might be:
 
 See [here](/blog/modern-vanilla-js-cookie-parsing.html) for how to parse your cookies.
 
-Alternatively, if you don't have a `<form>` element handy, you can programatically build a `FormData`:
+Alternatively, if you don't have a `<form>` element handy, you can programmatically build a `FormData`:
 
     :::js
     const data = new FormData()
@@ -232,6 +232,6 @@ comment and let me know, and I'll update this post!
 
 ## Thanks
 
-Many thanks to Bjorn Dissing who prompted me to finally write this post, and
+Many thanks to Bjørn Dissing who prompted me to finally write this post, and
 helped me field test it! They've even created a sample implementation and
 [published it!](https://github.com/bsdis/django_react_session_auth).
