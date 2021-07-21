@@ -34,7 +34,7 @@ If you're using `fetch` you will need to set `credentials` to at least
 Django's session-based auth works by storing the user ID and the auth backend
 that found them in the session.
 
-So, as long as the user agent (e.g. your browser) sends the cookie, it will "just
+So long as the user agent (e.g. your browser) sends the cookie, it will "just
 work".
 
 ## Problems
