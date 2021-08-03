@@ -14,15 +14,16 @@ extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 <blockquote>
 <strong>Note:</strong> This post is still a Work In Progress.
 
-I am posting it now to help people with what I have, and seek feedback and furter input.
+I am posting it now to help people with what I have, and seek feedback and
+further input.
 </blockquote>
 
-
-Recently a few people have been asking about managing dymanic numbers of
+Recently a few people have been asking about managing dynamic numbers of
 [FormSets](https://docs.djangoproject.com/en/3.0/topics/forms/formsets/) in
 Django.
 
-When we look at how Admin handles inlines we seee Django can handle this already.
+When we look at how Admin handles inlines we see Django can handle this
+already.
 
 But how does it work? And how can _you_ take advantage of this power?
 
@@ -245,8 +246,8 @@ Toppings.
     >>> from order.models import Pizza, Topping
     >>> Topping.objects.bulk_create(Topping(name=name) for name in {'cheese', 'olives', 'onion', 'mushroom'})
     [<Topping: olives>, <Topping: cheese>, <Topping: mushroom>, <Topping: onion>]
-    >>> Pizza.objects.bulk_create(Pizza(name=name) for name in {'Plain', 'Capriciossa', 'Hawaiian', 'Spicy'})
-    [<Pizza: Capriciossa>, <Pizza: Plain>, <Pizza: Hawaiian>, <Pizza: Spicy>]
+    >>> Pizza.objects.bulk_create(Pizza(name=name) for name in {'Plain', 'Capricciosa', 'Hawaiian', 'Spicy'})
+    [<Pizza: Capricciosa>, <Pizza: Plain>, <Pizza: Hawaiian>, <Pizza: Spicy>]
 
 So, now we have a simple order form, that lets us pick a single pizza...
 
@@ -276,7 +277,7 @@ Let's look closer at what our form has rendered:
           <label for="id_form-0-pizza">Pizza:</label>
           <select name="form-0-pizza" id="id_form-0-pizza">
           <option value="" selected="">---------</option>
-          <option value="1">Capriciossa</option>
+          <option value="1">Capricciosa</option>
           <option value="2">Plain</option>
           <option value="3">Hawaiian</option>
           <option value="4">Spicy</option>
@@ -311,7 +312,7 @@ In `order/forms.py` we add the argument `extra=2`
           <label for="id_form-0-pizza">Pizza:</label>
           <select name="form-0-pizza" id="id_form-0-pizza">
             <option value="" selected="">---------</option>
-            <option value="1">Capriciossa</option>
+            <option value="1">Capricciosa</option>
             <option value="2">Plain</option>
             <option value="3">Hawaiian</option>
             <option value="4">Spicy</option>
@@ -333,7 +334,7 @@ In `order/forms.py` we add the argument `extra=2`
           <label for="id_form-1-pizza">Pizza:</label>
           <select name="form-1-pizza" id="id_form-1-pizza">
             <option value="" selected="">---------</option>
-            <option value="1">Capriciossa</option>
+            <option value="1">Capricciosa</option>
             <option value="2">Plain</option>
             <option value="3">Hawaiian</option>
             <option value="4">Spicy</option>
@@ -354,14 +355,14 @@ In `order/forms.py` we add the argument `extra=2`
       <button type="submit"> Order </button>
     </form>
 
-So, we now have 2 copies of our form fields, but slightly differnt.
+So, we now have 2 copies of our form fields, but slightly different.
 
 The value for `form-TOTAL_FORMS` is now 2, not 1, and our fields have
 sequential prefixes: `form-0-pizza` and `form-1-pizza`
 
 ## The `empty_form`
 
-Formsets provide us with a handy tool especially for what we're about to do :
+Formsets provide us with a handy tool especially for what we're about to do:
 [`empty_form`](https://docs.djangoproject.com/en/3.0/topics/forms/formsets/#empty-form)
 
 Let's add it to our template and see what we're given.
@@ -382,7 +383,7 @@ This results in this showing in our HTML:
           <label for="id_form-__prefix__-pizza">Pizza:</label>
           <select name="form-__prefix__-pizza" id="id_form-__prefix__-pizza">
             <option value="" selected="">---------</option>
-            <option value="1">Capriciossa</option>
+            <option value="1">Capricciosa</option>
             <option value="2">Plain</option>
             <option value="3">Hawaiian</option>
             <option value="4">Spicy</option>
@@ -508,4 +509,4 @@ Load it in your page, and initialise it with:
     const el = document.querySelector('form');
     const mgr = new FormSetManager(el, '');
 
-Adjust the selector and previx as appropriate.
+Adjust the selector and prefix as appropriate.

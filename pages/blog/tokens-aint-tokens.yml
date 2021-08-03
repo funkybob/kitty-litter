@@ -12,34 +12,34 @@ extra_head: '<link rel="stylesheet" href="/css/codehilite.css">'
 After writing my recent rant about token authentication, I realised there was
 more to say on the subject.
 
-Because not all tokens are created equal I feel it's important for people to
+Not all tokens are created equal, so I feel it's important for people to
 understand the differences.
 
-So here's a quick summary of some of the common token types, and their relative
+Here's a quick summary of some of the common token types, and their relative
 strengths and weaknesses.
 
 ## Some terms.
 
-User: typically the Human wanting to allow systems limited access to their
+User: typically the Human wanting to allow Agents limited access to their
 resources.
 
-Issuer: the system generating tokens
+Issuer: the service generating tokens
 
-Consumer: a system that trusts tokens from the issuer.
+Consumer: a service that trusts tokens from the issuer.
 
-Agent: a system which is issued a token to grant it rights with a Consumer.
+Agent: a service which is issued a token to grant it rights with a Consumer.
 
-Grant: authorization granted to an Agent by a User.
+Grant: authorisation granted to an Agent by a User.
 
 ## Token Types
 
-### Opaque vs. Parseable
+### Opaque vs. Parsable
 
 Opaque tokens are meaningless to those who hold them and those who consume
 them. They provide no information beyond being an identifier.
 
-Parseable tokens (like JWT) contain data as well as acting as an identifier.
-They can include a user ID, as well as authorization claims, and so on.
+Parsable tokens (like JWT) contain data as well as acting as an identifier.
+They can include a user ID, as well as authorisation claims, and so on.
 
 ### Plain vs. Signed
 
@@ -49,7 +49,7 @@ and current tokens so as to be able to verify them.
 
 Signed tokens contain extra information to "prove" they were produced by a
 "trusted" Issuer. This is typically done by appending a "signature" to the
-token (opaque or parseable).
+token (opaque or parsable).
 
 Signatures may be done using either Shared Secret or Public Key approaches. See
 below for more discussion on the relative merits of each.
@@ -60,7 +60,7 @@ Issuer to verify each token. However, in doing so they can also verify each
 time the token has not been revoked or amended.
 
 Signed tokens do not require the Consumer to contact the Issuer in order to
-validate it as a legitemate token. However, they do have the issue of becoming
+validate it as a legitimate token. However, they do have the issue of becoming
 outdated; since the Consumer does not contact the Issuer, these tokens can not
 be revoked. The common solution for this is to make these tokens short lived,
 and expire quickly.
@@ -77,7 +77,7 @@ cookie handling ensures it's only ever sent in requests to the Issuer.
 
 ### Open vs. Encrypted
 
-For Parseable tokens, they may be raw serialised data, or encrypted.
+For Parsable tokens, they may be raw serialised data, or encrypted.
 
 Raw data can be read by anyone who can see the token, including the Agent.
 Most JWT systems use this, which is why it's recommended to not use them for
@@ -96,7 +96,7 @@ same key.  Typically this uses a system like
 
 Without knowing the secret you can not generate or verify a token.
 
-Shared Secret systems tend to by simpler to implement, but require every system
+Shared Secret systems tend to be simpler to implement, but require every system
 having the same key, making them _all_ hacking targets.
 
 This means the Issuer *must* trust *every* Consumer not to abuse the Shared
@@ -113,19 +113,19 @@ This also means none of the Consumers can generate a valid token.
 ## Which to use?
 
 If your system is monolithic, simple opaque tokens can suffice. An example of
-this is Django's session auth, if you treat the Session Cookie value as the
-Token.
+this is Django's session auth, where we can think of the Session Cookie value
+as the Token.
 
-When it comes to distributed systems, you have more considerations.
+When it comes to distributed systems, you have more things to consider.
 
 Signed tokens allow Consumers to verify a token is valid without having to
 contact the Issuer, but suffer the revocation limits mentioned earlier.
 
-Parseable tokens can carry details of granted authorisation rights, allowing
+Parsable tokens can carry details of granted authorisation rights, allowing
 for more nuanced Grants without the need to contact the Issuer to check for
 specific permissions.
 
-They can also continue to work as Opaque tokens when simply posessing the token
+They can also continue to work as Opaque tokens when simply possessing the token
 is sufficient authorisation to access the resource.
 
 If your system is distributed, but private (all Consumers are under your
@@ -142,16 +142,16 @@ Most combinations of the above have been tried over the years, and
 
 1. HTTP Basic Auth
 
-    This can be considered an unsigned, parseable token, as it contains the
+    This can be considered an unsigned, parsable token, as it contains the
     username and password base64 encoded.
 
-1. Oauth2
+1. OAuth2
 
     Originally this used opaque tokens, since the Issuer is also the Consumer.
 
 1. JWT
 
-    Commonly, JWT are Parseable and Signed.
+    Commonly, JWT are Parsable and Signed.
 
     They support both Shared Secret and Public Key signing.
 
@@ -159,9 +159,9 @@ Most combinations of the above have been tried over the years, and
 
 1. [OIDC](https://openid.net/connect/)
 
-    This system builts on top of Oauth2, replacing their Opaque tokens with
-    Parseable JWTs.
+    This system builds on top of Oauth2, replacing their Opaque tokens with
+    Parsable JWTs.
 
-    Since Parseable tokens are backwards compatible with Opaque tokens, this
-    allows existing Oauth2 systems to be retrofitted as ID services.
+    Since Parsable tokens are backward compatible with Opaque tokens, this
+    allows existing OAuth2 systems to be retrofitted as ID services.
 

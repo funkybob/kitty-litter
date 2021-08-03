@@ -279,7 +279,7 @@ created by the `nginx` package.
     server {
         listen 80;
 
-        # The hostnamename of my site
+        # The hostname(s) of my site
         server_name *.mysite.com;
 
         # Where to look for content (static and media)
