@@ -213,7 +213,7 @@ other views, we can override their config attributes when calling `as_view()`:
 
     from . import views
 
-    app_label = 'accounts'
+    app_name = 'accounts'
     urlpatterns = [
         path('register/',
             views.UserRegistrationView.as_view(),
