@@ -14,7 +14,7 @@ Recently a friend commented on how Django might do more to support SPA
 applications, notably by having built-in support for authentication using JWTs.
 
 This is not a new question, and recently I've been discussing with someone on
-[IRC](https://freenode.net/) about JWT support in Django that was not tied to
+[IRC](https://libera.chat/) about JWT support in Django that was not tied to
 Django REST Framework.
 
 I have frequently helped people on IRC having issues supporting token based
