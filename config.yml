@@ -9,3 +9,5 @@ global:
 content_type:
   SCSS:
     output_style: 'compressed'
+  MarkdownPage:
+    - toc
