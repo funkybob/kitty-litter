@@ -264,7 +264,7 @@ the "gzip static" module.
     :::console
     # apt-get install nginx-light
 
-Now want to put the following in a new file called
+Now we want to put the following into a new file called
 `/etc/nginx/sites-available/mysite` - the directory should already exist,
 created by the `nginx` package.
 
