@@ -75,11 +75,13 @@ doesn't work, sudo!".
 
 **DO NOT DO THIS**{: .warning }
 
+This is a terrible habit, and frequently leads to grave mistakes.
+
 Using `sudo` is something you should only do when you _know_ you _absolutely
 must_.
 
-In this tutorial we will **never** be using `sudo`. In all cases where you
-need to run something as root, either SSH in as root, or use the `su` command.
+In this tutorial we will **never** be using `sudo`. In all cases where you need
+to run something as root, either SSH in as root, or use the `su` command.
 
 [Note: out of the box Debian does not include sudo. And I never install it.
 Food for thought.]
@@ -248,7 +250,8 @@ Here are some settings you can tune for memory use:
 
 See [here](https://www.postgresql.org/docs/11/runtime-config-resource.html#RUNTIME-CONFIG-RESOURCE-MEMORY) for more details.
 
-Beware, however, that setting these values too low can have detrimental effects on performance.
+Beware, however, that setting these values too low can have detrimental effects
+on performance.
 
 Once you've adjusted these, restart postgres:
 
@@ -257,14 +260,17 @@ Once you've adjusted these, restart postgres:
 
 ### Configuring nginx
 
-Debian provides 3 different builds of nginx, with different options compiled in.
-The smallest we can use is nginx-light, since we'll only be wanting uWSGI and
-the "gzip static" module.
+Debian provides 3 different builds of nginx, with different options compiled
+in. The smallest we can use is nginx-light, since we'll only be wanting uWSGI
+and the "gzip static" module.
 
     :::console
     # apt-get install nginx-light
 
-Now we want to put the following into a new file called
+Now we're going to create a new config file for our site. We don't use the
+existing one as it's liable to be overwritten on the next package update.
+
+We want to put the following into a new file called
 `/etc/nginx/sites-available/mysite` - the directory should already exist,
 created by the `nginx` package.
 
