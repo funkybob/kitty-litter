@@ -1,5 +1,5 @@
 title: Blog
-template: blog_index.html
+template: blog/index.html
 tags:
   - in-menu
 ---
