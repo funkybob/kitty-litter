@@ -14,8 +14,8 @@ I keep hearing people saying they use Token auth because they think Django's
 default session-based auth won't work with their Vue/React/whatever Single Page
 Application (SPA).
 
-This has always baffled me, beyond assuming people are (cargo
-culting)[https://en.wikipedia.org/wiki/Cargo_cult] something.
+This has always baffled me, beyond assuming people are
+(cargo culting)[https://en.wikipedia.org/wiki/Cargo_cult] something.
 
 Also I've recently had interactions with someone I deeply respect, who also
 seemed to feel Django's docs on handling authentication with a SPA were
