@@ -50,7 +50,10 @@ class TagIndex(Selection):
 
 def excerpt(content, length):
     fragments = html.fromstring(content)
-    return SafeStr(''.join(html.tostring(x, encoding='unicode') for x in fragments[:length]))
+    return SafeStr(''.join(
+        html.tostring(x, encoding='unicode')
+        for x in fragments[:length]
+    ))
 
 
 @Site.register_context_provider
