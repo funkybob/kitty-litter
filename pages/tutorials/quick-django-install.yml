@@ -120,7 +120,7 @@ We need to replace the default config file `/etc/h2o/h2o.conf` with our own:
     hosts:
       default:
         paths:
-          "":
+          "/":
             proxy.reverse.url: "http://[unix:/srv/www/gunicorn.sock]"
             proxy.preserve-host: ON
           "/static":
@@ -271,6 +271,12 @@ And at long last, we can ask `systemd` to start our socket service:
 
     :::console
     # systemctl enable --now gunicorn.socket
+
+Now let's confirm that the Django application is accessible, at least inside the server:
+
+    :::console
+    $ wget -O - http://localhost 2>/dev/null | grep title
+        <title>The install worked successfully! Congratulations!</title>
 
 Finally, to make sure it's all safe and reliable, we'll reboot:
 
