@@ -5,6 +5,7 @@ plugins:
 
 global:
     sitename: Kitty Litter
+    url: https://blog.tinbrain.net/
 
 content_type:
   SCSS:

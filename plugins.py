@@ -1,13 +1,15 @@
 import typing
 from collections import Counter
 from pathlib import Path
+from urllib.parse import urljoin
 
-import yaml
-from lxml import html
+from lxml import etree, html
+from lxml.builder import ElementMaker
 
 from stencil import SafeStr
 
 from gilbert import Site
+from gilbert.content import Renderable, Content
 from gilbert.plugins.selection import Selection
 from gilbert.plugins.markdown import MarkdownPage
 from gilbert.utils import oneshot
@@ -46,6 +48,51 @@ class TagIndex(Selection):
                 'pages': [page for page in self.pages if tag in page.tags]
             }):
                 target.write_text(template.render(ctx))
+
+
+ATOM_NAMESPACE = 'http://www.w3.org/2005/Atom'
+
+RSS = ElementMaker(nsmap={'atom': ATOM_NAMESPACE})
+ATOM = ElementMaker(namespace=ATOM_NAMESPACE)
+
+
+class RssFeed(Renderable, Content):
+    selection: str
+    output_extension = 'xml'
+
+    def render(self):
+        cfg = self.site.config
+
+        url = cfg['global']['url']
+
+        selection = self.site.content[self.selection]
+
+        items = [
+            RSS.item(
+                RSS.title(page.title),
+                RSS.link(urljoin(url, str(page.output_filename))),
+                RSS.guid(urljoin(url, str(page.output_filename))),
+                RSS.description(''),
+            )
+            for page in selection.pages
+        ]
+
+        doc = RSS.rss(
+            RSS.channel(
+                RSS.title(cfg['global']['sitename']),
+                RSS.link(url),
+                ATOM.link(
+                    rel="self",
+                    href=urljoin(url, str(self.output_filename)),
+                ),
+                RSS.description("FunkyBob's Blog"),
+                *items,
+            ),
+            version="2.0",
+        )
+
+        target = self.site.dest_dir / self.output_filename
+        target.write_bytes(etree.tostring(doc, pretty_print=True))
 
 
 def excerpt(content, length):
