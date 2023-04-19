@@ -5,7 +5,7 @@ description = ""
 authors = ["Curtis Maloney <curtis@tinbrain.net>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 gilbert = "^0.5.0"
 lxml = "^4.5.0"
 pygments = "^2.6.1"
