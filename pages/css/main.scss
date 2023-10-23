@@ -246,8 +246,7 @@ a {
   }
 }
 
-a[href^="https://"],
-a[href^="http://"] {
+a {
   outline: dotted 1px;
 }
 a[href^="https://"]:before,
