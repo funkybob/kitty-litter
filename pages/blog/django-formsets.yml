@@ -103,7 +103,7 @@ Into our `orders/views.py` we'll add a simple view to display our order form.
 
     :::py
     from django.shortcuts import render, redirect
-      
+
     from .forms import OrderFormSet
 
 
@@ -160,7 +160,7 @@ Next, our home page in `orders/templates/home.html`
 
     :::html
     {% extends "base.html" %}
-      
+
     {% block content %}
 
     <a href="/order"> Order ! </a>
@@ -171,7 +171,7 @@ And finally, our order page in `orders/templates/order.html`
 
     :::html
     {% extends "base.html" %}
-      
+
     {% block content %}
 
     <form method="POST" action=".">
@@ -467,7 +467,7 @@ So here is an attempt at a more general purpose utility for managing a formset:
         this.el = el;
         this.prefix = prefix;
         this.tmpl = el.querySelector('template');
-        this.counter = el.querySelector(`[name={prefix}-TOTAL_FORMS]`);
+        this.counter = el.querySelector(`[name=${prefix}-TOTAL_FORMS]`);
       }
       addForm() {
         let newForm = this.tmpl.content.cloneNode(true);
