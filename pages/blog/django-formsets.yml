@@ -424,7 +424,7 @@ Them we'll add some JavaScript to the end of our page:
       // Get a handle on the current count of forms.
       let counter = document.querySelector('[name=form-TOTAL_FORMS]')
 
-      document.querySelector('#add-form').addEventListener('click', ev => {
+      document.querySelector('#add-form').addEventListener('click', () => {
         // Clone the tree
         let newForm = tmpl.content.cloneNode(true);
         // Update the IDs
@@ -471,8 +471,8 @@ So here is an attempt at a more general purpose utility for managing a formset:
       }
       addForm() {
         let newForm = this.tmpl.content.cloneNode(true);
-        this.setFormLabels(newForm, counter.value);
-        counter.value = 1 + Number(counter.value);
+        this.setFormLabels(newForm, this.counter.value);
+        this.counter.value = 1 + Number(this.counter.value);
         document
           .querySelector('form fieldset:last-of-type')
           .insertAdjacentElement('afterend', newForm.children[0]);
@@ -481,9 +481,9 @@ So here is an attempt at a more general purpose utility for managing a formset:
         el.parent.remove(el);
         this.renumberForms();
       }
-      renumberForms() {
+      renumberForms(el) {
         this.el.querySelectorAll('fieldset').forEach(
-          (form, idx) => setFormLabels(el, idx)
+          (form, idx) => this.setFormLabels(el, idx)
         );
       }
       setFormLabels(formEl, idx) {
