@@ -1,0 +1,117 @@
+title: Obfuscating Object IDs in APIs
+date: 2024-02-13
+content_type: BlogPost
+tags:
+  - code
+  - security
+---
+
+It's become common wisdom to obfuscate primary key values in API URLs as some
+sort of "security measure".
+
+This often takes the form of using UUIDv4 or some other randomly generated
+value for the Primary Key (PK), instead of a simple sequential value.
+
+Other times, an additional surrogte key field is added for this, separate to
+the existing PK.
+
+I recently found myself trying to recall exactly _what_ issues were mitigate by
+this practice, so I asked about.
+
+## The reasons against.
+
+### Database Load
+
+The first issue that comes to mind is we're adding otherwise meaningless fields
+to our SQL.
+
+Also, randomly generated values in particular cause problems for SQL DBMSs and
+indexing.
+
+There was a famous case with one site running MySQL, who didn't realise that
+the MyISAM storage engine physically resorts tuples by PK order, leading to
+massive server I/O loads after a new feature went live.
+
+In PostgreSQL, random inserts tend to cause more work on insert, requiring more
+frequent B-Tree index rebalancing, causing more page writes, [and thus WAL
+churn](https://www.2ndquadrant.com/en/blog/on-the-impact-of-full-page-writes/).
+
+### Software Support
+
+Another potential issue (and, indeed, one I encountered leading to this quest),
+is if your tools and libraries support working with UUIDs, or looking up
+records by other than their PK.
+
+
+## The reasons for.
+
+### Enumeration attacks
+
+Any time someone spots that your API uses sequential IDs in the URLs, they may
+be tempted to "explore" by plugging in other values.
+
+Or, potentially, exfiltrating all of your records by straight up scanning the
+ID range.
+
+On authenticated endpoints this is trivially mitigated by filtering all
+requests by what the current User is allowed to see.
+
+However, if your endpoint is not authenticated, this could be an issue, and
+might justify using randomised surrogate keys.
+
+### Information leakage
+
+This takes several forms.
+
+#### [German Tank Problem](https://en.wikipedia.org/wiki/German_tank_problem).
+
+Given a sample of ID values, it's possible to estimate the total count.
+
+Is this a problem? That depends on your case. For some, it would allow your
+competitors to estimate your client base size.
+
+#### Record Age
+
+Similarly, by comparing IDs over time, you could also estimate the age of
+various records.
+
+If you sample over time, or the records have a timestamp, you could potentially
+calculate growth over time, as well in change of growth rates.
+
+This might be considered sensitive company information.
+
+
+## Solutions
+
+1. UUIDv4
+
+   Random, so has the WAL bloat issue.
+
+   128bit, so a large key space.
+
+   Not guaranteed unique; It's an incomprehensibly large key space, but random is random.
+
+2. UUIDv7
+
+   Timetsamped sequential UUIDs.
+
+   Avoids the WAL bloat issues, but not the record age inference.
+
+   In fact, by incorporating an actual timestamp, you don't even need to be able to read the data.
+
+3. Offset + Step
+
+   As a partial mitigation, it was suggested to use a sequence with a random starting offset, and an increment of other than 1.
+
+   This would make sequential scanning slower, but not impossible.
+
+   It hampers, but does not prevent, information leakage of the types listed above.
+
+4. Sqids (formerly HashIDs)
+
+   [Sqids](https://sqids.org/) provide a reversible encoding of one or more integers to an obfuscated string.
+
+   This means you don't need to store another field.
+
+   I have implemented near-transparent handling of these in Django, to great effect.
+
