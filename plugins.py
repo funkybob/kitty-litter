@@ -1,5 +1,7 @@
 import typing
 from collections import Counter
+from collections.abc import Collection
+from functools import cached_property
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -12,7 +14,6 @@ from gilbert import Site
 from gilbert.content import Renderable, Content
 from gilbert.plugins.selection import Selection
 from gilbert.plugins.markdown import MarkdownPage
-from gilbert.utils import oneshot
 
 
 class BlogPost(MarkdownPage):
@@ -24,10 +25,10 @@ class RecipePost(MarkdownPage):
 
 
 class TagIndex(Selection):
-    exclude_tags: typing.Collection[str] = set()
+    exclude_tags: Collection[str] = set()
     template = 'tag_index.html'
 
-    @oneshot
+    @cached_property
     def tag_counts(self):
         tags = Counter()
         for obj in self.pages:
