@@ -34,3 +34,8 @@ jobs:
 
       - name: Build
         run: gilbert render
+
+      - name: Deploy
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
