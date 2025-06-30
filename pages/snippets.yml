@@ -11,6 +11,20 @@ Just some simple code snippets I often want to remember...
 
 ## JavaScript
 
+### Arrays
+
+    :::js
+
+    function sequence(length, start=0) {
+      return Array.from({ length }, (_, idx) => idx + start);
+    }
+
+First, this "tricks" `Array.from` into thinking we've passed it an array of `length` items.
+Then it takes advantage of the second argument to `Array.from`, which is a map function.
+The second argument to the map function is the element index.
+
+See: [Array.from](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from)
+
 ### DOM
 
 #### Delegate an event
@@ -19,7 +33,9 @@ Just some simple code snippets I often want to remember...
 
     function delegate(root, event, selector, handler) {
       document.querySelector(root).addEventListener(event, ev => {
-        if(ev.target.matches(selector)) handler(ev);
+        if(ev.target.matches(selector)) {
+          handler(ev);
+        }
       })
     }
 
