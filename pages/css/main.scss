@@ -68,6 +68,7 @@ body {
     justify-content: space-between;
     padding: 0 1em;
 
+    box-shadow: 0 0 10px 5px $borderColour;
     border-bottom: solid $borderColour 1px;
     background-color: #333;
     color: white;
@@ -110,6 +111,11 @@ body {
     background-color: #333;
 
     line-height: 40px;
+    text-align: center; /* this is currently only the RSS icon */
+    > p {
+      line-height: 40px;
+      vertical-align: baseline;
+    }
   }
 
   > aside {
@@ -302,6 +308,11 @@ dt { font-weight: bold; }
 
 }
 
+/* RSS Icon */
+[aria-label="RSS Feed"] > img {
+    width: 32px;
+    height: auto;
+}
 
 @media (max-width: 850px) {
   body {

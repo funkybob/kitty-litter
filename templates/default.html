@@ -9,6 +9,7 @@
 	<link rel="shortcut icon" href="/favicon.png" type="image/png">
 	<link rel="stylesheet" href="/css/main.css">
 	{{ safe(this.extra_head) }}
+	{% block head %}{% endblock %}
 </head>
 <body>
 	<header>
@@ -36,7 +37,6 @@
 		</section>
 
 		{% block sidebar %}{% endblock %}
-
 	</aside>
 
 	<aside class="right">
@@ -62,12 +62,13 @@
 {% endif %}
 		</header>
 
-		{% block content %}
+{% block content %}
 		<section> {{ safe(this.content) }} </section>
 {% endblock %}
 	</main>
 
 	<footer>
+		<a href="/rss.xml" aria-label="RSS Feed"><img src="/images/rss-icon.png" alt="rss"></a>
 	</footer>
 
 </body>

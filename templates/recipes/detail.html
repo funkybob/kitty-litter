@@ -1,6 +1,25 @@
 {% extends "recipes/base.html" %}
 
 {% block title %}{{ this.title }}{% endblock %}
+{% block head %}
+<script type="module">
+var lock;
+document.querySelector("#wake").addEventListener("change", async () => {
+	if (lock) {
+		await lock.release();
+		lock = undefined;
+	} else {
+		lock = await navigator.wakeLock.request("screen");
+	}
+});
+</script>
+{% endblock %}
+{% block header %}
+    <label>
+      <input type="checkbox" id="wake"> Keep screen awake
+    </label>
+{% endblock %}
+
 {% block offbar %}
 {% if this.image %}
 <section>
