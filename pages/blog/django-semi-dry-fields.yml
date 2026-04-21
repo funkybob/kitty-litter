@@ -34,7 +34,11 @@ So what have we got here?  Now, on my models I can put:
     :::py
     class MyModel(models.Model):
         price = PriceField()
-        tax = PriceField(null=True, blank=True, help_text='Where applicable.')
+        tax = PriceField(
+            null=True,
+            blank=True,
+            help_text='Where applicable.',
+        )
 
 So, now my two fields are DecimalFields, with the same digits, etc., but some differences.
 
