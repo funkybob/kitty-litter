@@ -23,8 +23,11 @@ Here's a little sample from a project I'm currently working on:
     :::py
     import functools
 
-    PriceField = functools.partial(models.DecimalField, decimal_places=2,
-        max_digits=10)
+    PriceField = functools.partial(
+        models.DecimalField,
+        decimal_places=2,
+        max_digits=10,
+    )
 
 So what have we got here?  Now, on my models I can put:
 
@@ -38,7 +41,9 @@ So, now my two fields are DecimalFields, with the same digits, etc., but some di
 How about an even more common case:
 
     :::py
-    from datetime import datetime
+    from django.utils import timezone
 
-    AutoDateTimeField = functools.partial(models.DateTimeField,
-        default=datetime.now)
+    AutoDateTimeField = functools.partial(
+        models.DateTimeField,
+        default=timezone.now,
+    )
