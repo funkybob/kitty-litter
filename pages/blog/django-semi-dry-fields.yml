@@ -22,7 +22,7 @@ title has `help_text`, and so on.
 
 ## Partially done
 
-Enter the joy of functools.partial
+Enter the joy of [functools.partial](https://docs.python.org/3/library/functools.html#functools.partial)
 
 Here's a little sample from a project I'm currently working on:
 
